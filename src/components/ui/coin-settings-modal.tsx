@@ -271,26 +271,12 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                               <div className="relative">
                                 <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                                 <input
-                                  type="text"
-                                  placeholder="dd.mm.yyyy"
-                                  value={setting.history_until ? 
-                                    new Date(setting.history_until).toLocaleDateString('de-DE', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    }) : 
-                                    ''
-                                  }
+                                  type="date"
+                                  value={setting.history_until || ''}
                                   onChange={(e) => {
-                                    // Parse the date from dd.mm.yyyy format
-                                    const parts = e.target.value.split('.');
-                                    if (parts.length === 3) {
-                                      const day = parts[0];
-                                      const month = parts[1];
-                                      const year = parts[2];
-                                      const isoDate = `${year}-${month}-${day}`;
-                                      updateSetting(symbol, market, { history_until: isoDate });
-                                    }
+                                    updateSetting(symbol, market, { 
+                                      history_until: e.target.value 
+                                    });
                                   }}
                                   disabled={!setting.load_history}
                                   className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
