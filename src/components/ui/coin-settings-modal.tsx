@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Database, Zap, Clock, AlertCircle } from 'lucide-react';
+import { X, Save, Calendar, Zap, Clock, AlertCircle } from 'lucide-react';
 import { CoinSetting, getSettings, saveSettings } from '../../api/symbols';
 
 interface CoinSettingsModalProps {
@@ -19,6 +19,7 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [rateLimit, setRateLimit] = useState<number>(15);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Load settings from backend
@@ -60,9 +61,7 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
       market,
       store_live: false,
       load_history: false,
-      history_until: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
       favorite: false,
-      db_resolution: 1, // 1 second
       chart_resolution: '1m',
     };
   };
@@ -103,6 +102,51 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
       setSaving(false);
     }
   };
+
+  // Check if a symbol is favorited in the coin selector
+  useEffect(() => {
+    if (isOpen) {
+      // Get favorites from localStorage
+      const savedFavorites = localStorage.getItem('coin-favorites');
+      if (savedFavorites) {
+        try {
+          const favSymbols = JSON.parse(savedFavorites);
+          
+          // Add favorited symbols to settings if they don't exist
+          const newSettings = [...settings];
+          let hasChanges = false;
+          
+          favSymbols.forEach((symbol: string) => {
+            // Extract market from symbol format (e.g., "BTC/USDT" -> "spot")
+            // This is a simplification - you might need more logic based on your symbol format
+            const market = symbol.includes('/USDT') ? 'spot' : 
+                          symbol.includes('/USD') ? 'coin-m-perp' : 'spot';
+            
+            // Check if this symbol/market combo already exists in settings
+            const exists = settings.some(s => s.symbol === symbol && s.market === market);
+            
+            if (!exists) {
+              newSettings.push({
+                symbol,
+                market,
+                store_live: false,
+                load_history: false,
+                favorite: true,
+                chart_resolution: '1m',
+              });
+              hasChanges = true;
+            }
+          });
+          
+          if (hasChanges) {
+            setSettings(newSettings);
+          }
+        } catch (err) {
+          console.error('Error processing favorites:', err);
+        }
+      }
+    }
+  }, [isOpen, settings]);
 
   // Get all unique symbols/markets from settings
   const allSymbols = Array.from(new Set(settings.map(s => `${s.symbol}_${s.market}`)))
@@ -192,20 +236,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                     <X size={16} />
                     Disable Live for All
                   </button>
-                  <button
-                    onClick={() => {
-                      allSymbols.forEach(({ symbol, market }) => {
-                        updateSetting(symbol, market, { 
-                          load_history: true,
-                          history_until: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-                        });
-                      });
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    <Database size={16} />
-                    Load 7 Days History
-                  </button>
                 </div>
               </div>
 
@@ -226,12 +256,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                         </th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           History
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          History Until
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Resolution
                         </th>
                       </tr>
                     </thead>
@@ -275,18 +299,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                               </label>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
-                              <div className="relative">
-                                <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <input
-                                  type="date"
-                                  value={setting.history_until || ''}
-                                  onChange={(e) => updateSetting(symbol, market, { history_until: e.target.value })}
-                                  disabled={!setting.load_history}
-                                  className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                />
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
                               <select
                                 value={setting.chart_resolution}
                                 onChange={(e) => updateSetting(symbol, market, { chart_resolution: e.target.value })}
@@ -314,16 +326,28 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
               </div>
 
               {/* Rate Limiting Info */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
                 <div className="flex items-start gap-3">
                   <Clock size={20} className="text-yellow-600 dark:text-yellow-400 mt-0.5" />
                   <div>
                     <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
                       Rate Limiting Information
                     </h4>
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
-                      Bitget API allows 15 requests per second for historical data. Large backfills may take time.
-                      Live data uses WebSocket connections which have no rate limits.
+                    <div className="flex items-center gap-4 mt-2">
+                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                        API requests per second:
+                      </p>
+                      <input
+                        type="number"
+                        value={rateLimit}
+                        onChange={(e) => setRateLimit(parseInt(e.target.value) || 15)}
+                        min="1"
+                        max="100"
+                        className="w-20 px-3 py-1 border border-yellow-300 dark:border-yellow-600 rounded bg-white dark:bg-gray-700 text-yellow-800 dark:text-yellow-200"
+                      />
+                    </div>
+                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
+                      Large backfills may take time. Live data uses WebSocket connections which have no rate limits.
                     </p>
                   </div>
                 </div>
