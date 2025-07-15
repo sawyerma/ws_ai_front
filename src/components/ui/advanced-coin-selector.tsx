@@ -230,107 +230,17 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
               </select>
 
               <button
-            {/* Header Row */}
-            <div className="flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-800 border-b border-gray-700">
-              <div className="w-[40px] text-center">
-                <span className="text-yellow-500">★</span>
-              </div>
-              <div className="w-[120px] font-bold text-xs text-gray-300 uppercase">
-                COIN <span className="ml-1">↑</span>
-              </div>
-              <div className="w-[120px] text-right font-bold text-xs text-gray-300 uppercase">
-                PRICE
-              </div>
-              <div className="w-[100px] text-right font-bold text-xs text-gray-300 uppercase">
-                24H
-              </div>
-              <div className="w-[40px] text-center font-bold text-xs text-gray-300 uppercase">
-                L
-              </div>
-              <div className="w-[40px] text-center font-bold text-xs text-gray-300 uppercase">
-                H
-              </div>
-            </div>
-
-            {/* Coins list */}
-            {!loading && filteredCoins.map((coin) => (
-              <div
-                key={coin.id}
-                className={`flex items-center px-4 h-[50px] font-sans cursor-pointer transition-all duration-200 border-b border-gray-700 ${
-                  coin.symbol === selectedSymbol
-                    ? "bg-gray-700"
-                    : "hover:bg-gray-700"
-                }`}
-                onClick={() => handleSymbolSelect(coin)}
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
-                <div className="w-[40px] text-center">
-                  <span
-                    className={`text-lg cursor-pointer hover:scale-125 transition-transform duration-200 ${
-                      coin.isFavorite
-                        ? "text-yellow-500"
-                        : "text-gray-500"
-                    }`}
-                    onClick={(e) => toggleFavorite(coin.id, e)}
-                  >
-                    ★
-                  </span>
-                </div>
-                <div className="w-[120px] font-bold text-sm text-white">
-                  {coin.symbol}
-                </div>
-                <div className="w-[120px] text-right font-semibold text-sm text-white">
-                  {coin.price}
-                </div>
-                <div
-                  className={`w-[100px] text-right font-bold text-sm ${
-                    (coin.changePercent ?? 0) >= 0
-                      ? "text-green-500"
-                      : "text-red-500"
-                  }`}
-                >
-                  {coin.change}
-                </div>
-                <div className="w-[40px] text-center">
-                  <span
-                    className="inline-block rounded-full"
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor:
-                        coin.liveStatus === "green"
-                          ? "rgba(16, 185, 129, 0.9)"
-                          : "rgba(239, 68, 68, 0.9)",
-                    }}
-                  ></span>
-                </div>
-                <div className="w-[40px] text-center">
-                  <span
-                    className="inline-block rounded-full"
-                    style={{
-                      width: "12px",
-                      height: "12px",
-                      backgroundColor:
-                        coin.histStatus === "green"
-                          ? "rgba(16, 185, 129, 0.9)"
-                          : "rgba(239, 68, 68, 0.9)",
-                    }}
-                  ></span>
-                </div>
-              </div>
-            ))}
-                            <TrendingUp size={14} className="inline mr-1" />
-                          ) : (
-                            <TrendingDown size={14} className="inline mr-1" />
-                          )}
-                          {symbol.change}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                {sortOrder === 'asc' ? (
+                  <TrendingUp size={14} className="inline mr-1" />
+                ) : (
+                  <TrendingDown size={14} className="inline mr-1" />
+                )}
+              </button>
             </div>
-          )}
+          </div>
 
           {/* Footer */}
           <div className="p-3 border-t border-gray-200 dark:border-gray-700 text-xs text-gray-500 dark:text-gray-400">
