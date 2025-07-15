@@ -138,7 +138,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[347px]">
+        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[324px]">
           {/* Search */}
           <div className="p-2 border-b border-gray-700">
             <div className="relative">
@@ -162,7 +162,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
             </div>
             <div className="w-[80px] text-right text-xs">PRICE</div>
             <div className="w-[70px] text-right text-xs">24H</div>
-            <div className="w-[35px] text-center text-xs">L</div>
+            <div className="w-[12px] text-center text-xs">L</div>
             <div className="w-[12px] text-center text-xs">H</div>
           </div>
 
@@ -205,7 +205,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                   >
                     {coin.change}
                   </div>
-                  <div className="w-[35px] text-center">
+                  <div className="w-[12px] text-center">
                     <span
                       className="inline-block w-2 h-2 rounded-full"
                       style={{
