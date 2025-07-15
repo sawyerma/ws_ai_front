@@ -273,16 +273,14 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                             <td className="px-6 py-4 whitespace-nowrap text-center">
                               <div className="relative">
                                 <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                                <div className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm">
-                                  {setting.history_until ? 
-                                    new Date(setting.history_until).toLocaleDateString('de-DE', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric'
-                                    }) : 
-                                    'dd.mm.yyyy'
-                                  }
-                                </div>
+                                <input
+                                  type="date"
+                                  value={setting.history_until || ''}
+                                  onChange={(e) => updateSetting(symbol, market, { history_until: e.target.value })}
+                                  disabled={!setting.load_history}
+                                  className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                  placeholder="dd.mm.yyyy"
+                                />
                               </div>
                             </td>
                           </tr>
