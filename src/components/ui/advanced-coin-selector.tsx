@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Search, Star, TrendingUp, TrendingDown, RefreshCw, Settings } from 'lucide-react';
+import { Search, RefreshCw, Settings } from 'lucide-react';
 import { getSymbols, ApiSymbol, clearCache } from '../../api/symbols';
 
 interface AdvancedCoinSelectorProps {
@@ -20,9 +20,6 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
   const [symbols, setSymbols] = useState<ApiSymbol[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedMarket, setSelectedMarket] = useState<string>('all');
-  const [sortBy, setSortBy] = useState<'symbol' | 'change' | 'volume'>('symbol');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
   // Load favorites from localStorage
@@ -70,12 +67,6 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
     loadSymbols();
   }, []);
 
-  // Get available markets
-  const availableMarkets = useMemo(() => {
-    const markets = new Set(symbols.map(s => s.market).filter(Boolean));
-    return ['all', ...Array.from(markets).sort()];
-  }, [symbols]);
-
   // Filter and sort symbols
   const filteredSymbols = useMemo(() => {
     let filtered = symbols;
@@ -87,11 +78,6 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
       );
     }
 
-    // Filter by market
-    if (selectedMarket !== 'all') {
-      filtered = filtered.filter(symbol => symbol.market === selectedMarket);
-    }
-
     // Sort symbols
     filtered.sort((a, b) => {
       // Favorites first
@@ -100,24 +86,12 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
       if (aFav && !bFav) return -1;
       if (!aFav && bFav) return 1;
 
-      // Then by selected sort
-      let comparison = 0;
-      switch (sortBy) {
-        case 'symbol':
-          comparison = a.symbol.localeCompare(b.symbol);
-          break;
-        case 'change':
-          comparison = a.changePercent - b.changePercent;
-          break;
-        default:
-          comparison = a.symbol.localeCompare(b.symbol);
-      }
-
-      return sortOrder === 'asc' ? comparison : -comparison;
+      // Then by symbol name
+      return a.symbol.localeCompare(b.symbol);
     });
 
     return filtered;
-  }, [symbols, searchTerm, selectedMarket, sortBy, sortOrder, favorites]);
+  }, [symbols, searchTerm, favorites]);
 
   // Toggle favorite
   const toggleFavorite = (symbol: string, e: React.MouseEvent) => {
@@ -147,123 +121,117 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
       {/* Selected Symbol Display */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-4 py-2 bg-[#111827] dark:bg-[#111827] border border-gray-700 dark:border-gray-700 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors min-w-[200px]"
+        className="flex items-center justify-between px-4 py-3 bg-[#111827] dark:bg-[#111827] border border-gray-700 dark:border-gray-700 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors min-w-[200px]"
       >
-        <span className="font-medium text-white dark:text-white">
+        <span className="font-bold text-white dark:text-white">
           {displaySymbol}
         </span>
-        {favorites.has(displaySymbol) && (
-          <Star size={16} className="text-yellow-500 fill-current" />
-        )}
         <svg
           className={`w-4 h-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
         </svg>
       </button>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 right-0 mt-2 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden">
+        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[420px]">
           {/* Search */}
-          <div className="p-4 border-b border-gray-700 dark:border-gray-700">
+          <div className="p-3 border-b border-gray-700">
             <div className="relative">
               <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search symbols..."
+                placeholder="Search symbols"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-600 dark:border-gray-600 rounded-lg bg-[#111827] dark:bg-[#111827] text-white dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded-lg bg-[#111827] text-white placeholder-gray-500 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Header Row */}
-          <div className="flex items-center px-[30px] bg-[#1e2433] dark:bg-[#1e2433] font-bold h-14 text-[#65717c] tracking-[0.03em] border-b border-gray-700">
-            <div className="w-[68px] text-center text-[0.78em]">
-              <span className="text-yellow-500">★</span>
+          <div className="flex items-center px-4 py-2 bg-[#1e2433] border-b border-gray-700 text-gray-400 text-xs">
+            <div className="flex items-center w-[140px]">
+              <span className="text-yellow-500 mr-2">★</span>
+              <span>COIN</span>
+              <span className="ml-1">↑</span>
             </div>
-            <div className="w-[190px] font-bold text-[0.83em]">COIN ↑</div>
-            <div className="w-[178px] text-right text-[0.83em]">PRICE</div>
-            <div className="w-[160px] text-right text-[0.83em]">24H</div>
-            <div className="w-[70px] text-center text-[0.82em]">L</div>
-            <div className="w-[70px] text-center text-[0.82em]">H</div>
+            <div className="w-[100px] text-right">PRICE</div>
+            <div className="w-[80px] text-right">24H</div>
+            <div className="w-[30px] text-center">L</div>
+            <div className="w-[30px] text-center">H</div>
           </div>
 
           {/* Coins list */}
-          <div className="max-h-[400px] overflow-y-auto">
+          <div className="max-h-[300px] overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-gray-400">
-                <RefreshCw size={20} className="animate-spin mx-auto mb-2" />
-                Loading symbols...
+                <RefreshCw size={16} className="animate-spin mx-auto mb-2" />
+                Loading...
               </div>
             ) : filteredSymbols.length > 0 ? (
               filteredSymbols.map((coin) => (
                 <div
                   key={`${coin.symbol}_${coin.market}`}
-                  className={`flex items-center px-[30px] h-[62px] text-[1.1rem] cursor-pointer transition-colors border-b border-gray-700 ${
+                  className={`flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-700 ${
                     coin.symbol === displaySymbol
                       ? "bg-[#1a2035]"
                       : "hover:bg-[#1a2035]"
                   }`}
                   onClick={() => handleSymbolSelect(coin)}
                 >
-                  <div className="w-[68px] text-center">
+                  <div className="flex items-center w-[140px]">
                     <span
-                      className={`text-[0.83em] cursor-pointer ${
-                        favorites.has(coin.symbol) ? "text-[#ffd600]" : "text-[#e7e7e7]"
+                      className={`text-lg mr-2 ${
+                        favorites.has(coin.symbol) ? "text-yellow-500" : "text-gray-600"
                       }`}
                       onClick={(e) => toggleFavorite(coin.symbol, e)}
                     >
                       ★
                     </span>
+                    <span className="font-bold text-white">{coin.symbol}</span>
                   </div>
-                  <div className="w-[190px] font-bold text-white">
-                    {coin.symbol}
-                  </div>
-                  <div className="w-[178px] text-right font-medium font-mono text-white">
+                  <div className="w-[100px] text-right font-mono text-white">
                     {coin.price}
                   </div>
                   <div
-                    className={`w-[160px] text-right font-bold ${
-                      (coin.changePercent || 0) >= 0 ? "text-[#15b446]" : "text-[#d53939]"
+                    className={`w-[80px] text-right font-bold ${
+                      (coin.changePercent || 0) >= 0 ? "text-green-500" : "text-red-500"
                     }`}
                   >
                     {coin.change}
                   </div>
-                  <div className="w-[70px] text-center">
+                  <div className="w-[30px] text-center">
                     <span
-                      className={`inline-block w-4 h-4 rounded-full border-2 ${
-                        coin.market === "spot"
-                          ? "bg-[#41cf58] border-[#40ba59]"
-                          : "bg-[#ef4444] border-[#d73c3c]"
-                      }`}
+                      className="inline-block w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: "rgb(34, 197, 94)"
+                      }}
                     ></span>
                   </div>
-                  <div className="w-[70px] text-center">
+                  <div className="w-[30px] text-center">
                     <span
-                      className={`inline-block w-4 h-4 rounded-full border-2 ${
-                        coin.market === "spot"
-                          ? "bg-[#41cf58] border-[#40ba59]"
-                          : "bg-[#ef4444] border-[#d73c3c]"
-                      }`}
+                      className="inline-block w-3 h-3 rounded-full"
+                      style={{
+                        backgroundColor: coin.market === "spot" ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
+                      }}
                     ></span>
                   </div>
                 </div>
               ))
             ) : (
               <div className="p-4 text-center text-gray-400">
-                No symbols found matching your criteria
+                No symbols found
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="p-3 border-t border-gray-700 text-xs text-gray-400 flex justify-between items-center">
+          <div className="p-2 border-t border-gray-700 text-xs text-gray-400 flex justify-between items-center">
             <div>
               {filteredSymbols.length} symbols
             </div>
