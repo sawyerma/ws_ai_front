@@ -308,7 +308,6 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                         height: `${(Math.abs(data.sell) / 150) * 128}px`
                       }}
                     ></div>
-                    
                   </div>
                 ))}
                 </div>

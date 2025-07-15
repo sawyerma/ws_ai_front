@@ -230,90 +230,94 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
               </select>
 
               <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-600"
+            {/* Header Row */}
+            <div className="flex items-center px-4 py-2 bg-gray-800 dark:bg-gray-800 border-b border-gray-700">
+              <div className="w-[40px] text-center">
+                <span className="text-yellow-500">★</span>
+              </div>
+              <div className="w-[120px] font-bold text-xs text-gray-300 uppercase">
+                COIN <span className="ml-1">↑</span>
+              </div>
+              <div className="w-[120px] text-right font-bold text-xs text-gray-300 uppercase">
+                PRICE
+              </div>
+              <div className="w-[100px] text-right font-bold text-xs text-gray-300 uppercase">
+                24H
+              </div>
+              <div className="w-[40px] text-center font-bold text-xs text-gray-300 uppercase">
+                L
+              </div>
+              <div className="w-[40px] text-center font-bold text-xs text-gray-300 uppercase">
+                H
+              </div>
+            </div>
+
+            {/* Coins list */}
+            {!loading && filteredCoins.map((coin) => (
+              <div
+                key={coin.id}
+                className={`flex items-center px-4 h-[50px] font-sans cursor-pointer transition-all duration-200 border-b border-gray-700 ${
+                  coin.symbol === selectedSymbol
+                    ? "bg-gray-700"
+                    : "hover:bg-gray-700"
+                }`}
+                onClick={() => handleSymbolSelect(coin)}
               >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </button>
-            </div>
-          </div>
-
-          {/* Error State */}
-          {error && (
-            <div className="p-4 text-red-600 dark:text-red-400 text-sm">
-              {error}
-              <button
-                onClick={() => loadSymbols(true)}
-                className="ml-2 underline hover:no-underline"
-              >
-                Retry
-              </button>
-            </div>
-          )}
-
-          {/* Loading State */}
-          {loading && (
-            <div className="p-4 text-gray-500 dark:text-gray-400 text-sm flex items-center gap-2">
-              <RefreshCw size={16} className="animate-spin" />
-              Loading symbols...
-            </div>
-          )}
-
-          {/* Symbol List */}
-          {!loading && !error && (
-            <div className="max-h-96 overflow-y-auto">
-              {filteredSymbols.length === 0 ? (
-                <div className="p-4 text-gray-500 dark:text-gray-400 text-sm text-center">
-                  No symbols found
+                <div className="w-[40px] text-center">
+                  <span
+                    className={`text-lg cursor-pointer hover:scale-125 transition-transform duration-200 ${
+                      coin.isFavorite
+                        ? "text-yellow-500"
+                        : "text-gray-500"
+                    }`}
+                    onClick={(e) => toggleFavorite(coin.id, e)}
+                  >
+                    ★
+                  </span>
                 </div>
-              ) : (
-                <div className="p-2">
-                  {filteredSymbols.map((symbol) => (
-                    <div
-                      key={`${symbol.symbol}_${symbol.market}`}
-                      className="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer group"
-                      onClick={() => handleSymbolSelect(symbol)}
-                    >
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            toggleFavorite(symbol.symbol);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Star
-                            size={16}
-                            className={`${
-                              favorites.has(symbol.symbol)
-                                ? 'text-yellow-500 fill-current'
-                                : 'text-gray-400 hover:text-yellow-500'
-                            }`}
-                          />
-                        </button>
-
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium text-gray-900 dark:text-white">
-                              {symbol.symbol}
-                            </span>
-                            <span className="text-xs px-2 py-1 bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300 rounded">
-                              {symbol.market}
-                            </span>
-                          </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
-                            ${symbol.price}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        <div className={`text-sm font-medium ${
-                          symbol.changePercent >= 0 
-                            ? 'text-green-600 dark:text-green-400'
-                            : 'text-red-600 dark:text-red-400'
-                        }`}>
-                          {symbol.changePercent >= 0 ? (
+                <div className="w-[120px] font-bold text-sm text-white">
+                  {coin.symbol}
+                </div>
+                <div className="w-[120px] text-right font-semibold text-sm text-white">
+                  {coin.price}
+                </div>
+                <div
+                  className={`w-[100px] text-right font-bold text-sm ${
+                    (coin.changePercent ?? 0) >= 0
+                      ? "text-green-500"
+                      : "text-red-500"
+                  }`}
+                >
+                  {coin.change}
+                </div>
+                <div className="w-[40px] text-center">
+                  <span
+                    className="inline-block rounded-full"
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      backgroundColor:
+                        coin.liveStatus === "green"
+                          ? "rgba(16, 185, 129, 0.9)"
+                          : "rgba(239, 68, 68, 0.9)",
+                    }}
+                  ></span>
+                </div>
+                <div className="w-[40px] text-center">
+                  <span
+                    className="inline-block rounded-full"
+                    style={{
+                      width: "12px",
+                      height: "12px",
+                      backgroundColor:
+                        coin.histStatus === "green"
+                          ? "rgba(16, 185, 129, 0.9)"
+                          : "rgba(239, 68, 68, 0.9)",
+                    }}
+                  ></span>
+                </div>
+              </div>
+            ))}
                             <TrendingUp size={14} className="inline mr-1" />
                           ) : (
                             <TrendingDown size={14} className="inline mr-1" />
