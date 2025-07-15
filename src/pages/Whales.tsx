@@ -394,7 +394,6 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                     <SortableHeader field="timestamp">Date/Time</SortableHeader>
                     <SortableHeader field="marketcap">Market Cap</SortableHeader>
                     <SortableHeader field="maker">Maker</SortableHeader>
-                    <SortableHeader field="age">Age</SortableHeader>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
                       ⭐
                     </th>
@@ -427,7 +426,6 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                       <td className="px-4 py-3 text-sm font-mono text-blue-400">
                         {tx.maker.slice(0, 8)}...{tx.maker.slice(-4)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-gray-300">{tx.age}</td>
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
