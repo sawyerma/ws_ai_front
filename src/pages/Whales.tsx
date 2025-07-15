@@ -309,10 +309,6 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                       }}
                     ></div>
                     
-                    {/* Time Label */}
-                    <div className="absolute -bottom-6 text-xs text-gray-400">
-                      {data.time}
-                    </div>
                   </div>
                 ))}
                 </div>
