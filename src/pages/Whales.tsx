@@ -262,7 +262,8 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
             
             {/* Simple Bar Chart */}
             <div className="relative h-64 mb-6">
-              <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400">
+              {/* Y-Axis Labels */}
+              <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between text-xs text-gray-400 z-10">
                 <span>150M</span>
                 <span>100M</span>
                 <span>50M</span>
@@ -272,22 +273,49 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                 <span>-150M</span>
               </div>
               
-              <div className="ml-12 h-full flex items-end justify-between">
+              {/* Chart Container with Grid Lines */}
+              <div className="ml-12 h-full relative">
+                {/* Horizontal Grid Lines */}
+                <div className="absolute inset-0 flex flex-col justify-between">
+                  {[...Array(7)].map((_, i) => (
+                    <div key={i} className="border-t border-gray-600 opacity-30"></div>
+                  ))}
+                </div>
+                
+                {/* Zero Line (Middle) */}
+                <div className="absolute top-1/2 left-0 right-0 border-t-2 border-gray-400 z-20"></div>
+                
+                {/* Vertical Grid Lines and Bars */}
+                <div className="h-full flex items-center justify-between relative">
                 {chartData.map((data, index) => (
-                  <div key={index} className="flex flex-col items-center w-16">
-                    {/* Buy bars (positive) */}
+                  <div key={index} className="flex flex-col items-center w-16 relative">
+                    {/* Vertical Grid Line */}
+                    <div className="absolute top-0 bottom-0 left-1/2 border-l border-gray-600 opacity-30 -translate-x-0.5"></div>
+                    
+                    {/* Buy bars (positive) - from center upward */}
                     <div 
-                      className="bg-blue-500 w-12 mb-1"
-                      style={{ height: `${(data.buy / 100) * 80}px` }}
+                      className="bg-blue-500 w-12 absolute bottom-1/2"
+                      style={{ 
+                        height: `${(data.buy / 150) * 128}px`,
+                        transform: 'translateY(0)'
+                      }}
                     ></div>
                     
-                    {/* Sell bars (negative) */}
+                    {/* Sell bars (negative) - from center downward */}
                     <div 
-                      className="bg-red-500 w-12"
-                      style={{ height: `${(Math.abs(data.sell) / 100) * 80}px` }}
+                      className="bg-red-500 w-12 absolute top-1/2"
+                      style={{ 
+                        height: `${(Math.abs(data.sell) / 150) * 128}px`
+                      }}
                     ></div>
+                    
+                    {/* Time Label */}
+                    <div className="absolute -bottom-6 text-xs text-gray-400">
+                      {data.time}
+                    </div>
                   </div>
                 ))}
+                </div>
               </div>
             </div>
           </div>
