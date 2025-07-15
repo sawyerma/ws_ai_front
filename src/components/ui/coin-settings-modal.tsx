@@ -9,198 +9,6 @@ interface CoinSettingsModalProps {
   selectedMarket?: string;
 }
 
-// Date Picker Component
-const DatePicker = ({ 
-  value, 
-  onChange, 
-  disabled, 
-  placeholder = "dd.mm.yyyy" 
-}: {
-  value: string;
-  onChange: (date: string) => void;
-  disabled: boolean;
-  placeholder?: string;
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = useState(value);
-  
-  // Format date for display
-  const formatDateForDisplay = (isoDate: string): string => {
-    if (!isoDate) return '';
-    try {
-      const date = new Date(isoDate);
-      return date.toLocaleDateString('de-DE', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric'
-      });
-    } catch {
-      return '';
-    }
-  };
-
-  // Generate calendar days
-  const generateCalendar = (year: number, month: number) => {
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const startDate = new Date(firstDay);
-    startDate.setDate(startDate.getDate() - firstDay.getDay() + 1); // Start from Monday
-    
-    const days = [];
-    const current = new Date(startDate);
-    
-    for (let i = 0; i < 42; i++) { // 6 weeks
-      days.push(new Date(current));
-      current.setDate(current.getDate() + 1);
-    }
-    
-    return days;
-  };
-
-  const currentDate = selectedDate ? new Date(selectedDate) : new Date();
-  const [viewYear, setViewYear] = useState(currentDate.getFullYear());
-  const [viewMonth, setViewMonth] = useState(currentDate.getMonth());
-  
-  const calendarDays = generateCalendar(viewYear, viewMonth);
-  const monthNames = [
-    'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-    'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember'
-  ];
-  
-  const handleDateSelect = (date: Date) => {
-    const isoDate = date.toISOString().split('T')[0];
-    setSelectedDate(isoDate);
-    onChange(isoDate);
-    setIsOpen(false);
-  };
-
-  const handleClear = () => {
-    setSelectedDate('');
-    onChange('');
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative">
-      <div className="relative">
-        <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-        <button
-          type="button"
-          onClick={() => !disabled && setIsOpen(!isOpen)}
-          disabled={disabled}
-          className={`w-full text-left pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm ${
-            disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-600'
-          }`}
-        >
-          {formatDateForDisplay(selectedDate) || placeholder}
-        </button>
-      </div>
-
-      {isOpen && !disabled && (
-        <>
-          {/* Overlay */}
-          <div 
-            className="fixed inset-0 z-40" 
-            onClick={() => setIsOpen(false)} 
-          />
-          
-          {/* Calendar Popup */}
-          <div className="absolute top-full left-0 mt-2 z-50 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg shadow-lg p-4 w-80">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-4">
-              <button
-                type="button"
-                onClick={() => {
-                  if (viewMonth === 0) {
-                    setViewMonth(11);
-                    setViewYear(viewYear - 1);
-                  } else {
-                    setViewMonth(viewMonth - 1);
-                  }
-                }}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              >
-                ←
-              </button>
-              
-              <div className="font-semibold text-gray-900 dark:text-white">
-                {monthNames[viewMonth]} {viewYear}
-              </div>
-              
-              <button
-                type="button"
-                onClick={() => {
-                  if (viewMonth === 11) {
-                    setViewMonth(0);
-                    setViewYear(viewYear + 1);
-                  } else {
-                    setViewMonth(viewMonth + 1);
-                  }
-                }}
-                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-              >
-                →
-              </button>
-            </div>
-
-            {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
-              {['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(day => (
-                <div key={day} className="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">
-                  {day}
-                </div>
-              ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
-              {calendarDays.map((date, index) => {
-                const isCurrentMonth = date.getMonth() === viewMonth;
-                const isSelected = selectedDate && new Date(selectedDate).toDateString() === date.toDateString();
-                const isToday = new Date().toDateString() === date.toDateString();
-                
-                return (
-                  <button
-                    key={index}
-                    type="button"
-                    onClick={() => handleDateSelect(date)}
-                    className={`
-                      p-2 text-sm rounded hover:bg-blue-100 dark:hover:bg-blue-900
-                      ${!isCurrentMonth ? 'text-gray-400 dark:text-gray-600' : 'text-gray-900 dark:text-white'}
-                      ${isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : ''}
-                      ${isToday && !isSelected ? 'bg-blue-100 dark:bg-blue-900 font-bold' : ''}
-                    `}
-                  >
-                    {date.getDate()}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Footer */}
-            <div className="flex justify-between mt-4 pt-4 border-t border-gray-200 dark:border-gray-600">
-              <button
-                type="button"
-                onClick={handleClear}
-                className="px-3 py-1 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
-              >
-                Löschen
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDateSelect(new Date())}
-                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Heute
-              </button>
-            </div>
-          </div>
-        </>
-      )}
-    </div>
-  );
-};
-
 const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
   isOpen,
   onClose,
@@ -341,12 +149,47 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                           />
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
-                          <DatePicker
-                            value={setting.history_until || ''}
-                            onChange={(date) => updateSetting(symbol, market, { history_until: date })}
-                            disabled={!setting.load_history}
-                            placeholder="dd.mm.yyyy"
-                          />
+                          <div className="relative">
+                            <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                            <input
+                              type="text"
+                              placeholder="dd.mm.yyyy"
+                              value={setting.history_until ? 
+                                new Date(setting.history_until).toLocaleDateString('de-DE', {
+                                  day: '2-digit',
+                                  month: '2-digit',
+                                  year: 'numeric'
+                                }) : 
+                                ''
+                              }
+                              onChange={(e) => {
+                                // Set today's date when user types anything
+                                if (e.target.value && setting.load_history) {
+                                  const today = new Date();
+                                  updateSetting(symbol, market, { 
+                                    history_until: today.toISOString().split('T')[0]
+                                  });
+                                } else {
+                                  updateSetting(symbol, market, { history_until: '' });
+                                }
+                              }}
+                              onClick={() => {
+                                // Toggle between today and empty
+                                if (setting.load_history) {
+                                  if (setting.history_until) {
+                                    updateSetting(symbol, market, { history_until: '' });
+                                  } else {
+                                    const today = new Date();
+                                    updateSetting(symbol, market, { 
+                                      history_until: today.toISOString().split('T')[0]
+                                    });
+                                  }
+                                }
+                              }}
+                              disabled={!setting.load_history}
+                              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm w-full disabled:opacity-50 disabled:cursor-not-allowed"
+                            />
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
                           <div className="relative">
