@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Calendar, Zap, Clock, AlertCircle } from 'lucide-react';
+import { X, Save, Calendar, Clock, AlertCircle } from 'lucide-react';
 import { CoinSetting, getSettings, saveSettings } from '../../api/symbols';
 
 interface CoinSettingsModalProps {
@@ -62,8 +62,7 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
       store_live: false,
       load_history: false,
       history_until: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
-      favorite: false,
-      chart_resolution: '1m',
+      favorite: false
     };
   };
 
@@ -181,7 +180,7 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-150px)]">
           {/* Error/Success Messages */}
           {error && (
             <div className="mb-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
@@ -210,36 +209,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
           ) : (
             <div className="space-y-6">
               {/* Quick Actions */}
-              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
-                  Quick Actions
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <button
-                    onClick={() => {
-                      allSymbols.forEach(({ symbol, market }) => {
-                        updateSetting(symbol, market, { store_live: true });
-                      });
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Zap size={16} />
-                    Enable Live for All
-                  </button>
-                  <button
-                    onClick={() => {
-                      allSymbols.forEach(({ symbol, market }) => {
-                        updateSetting(symbol, market, { store_live: false });
-                      });
-                    }}
-                    className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <X size={16} />
-                    Disable Live for All
-                  </button>
-                </div>
-              </div>
-
               {/* Settings Table */}
               <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
                 <div className="overflow-x-auto">
@@ -257,9 +226,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                         </th>
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           History
-                        </th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                          Chart Resolution
                         </th>
                       </tr>
                     </thead>
@@ -314,25 +280,6 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                                 />
                               </div>
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <select
-                                value={setting.chart_resolution}
-                                onChange={(e) => updateSetting(symbol, market, { chart_resolution: e.target.value })}
-                                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
-                              >
-                                <option value="1s">1 Second</option>
-                                <option value="5s">5 Seconds</option>
-                                <option value="15s">15 Seconds</option>
-                                <option value="30s">30 Seconds</option>
-                                <option value="1m">1 Minute</option>
-                                <option value="5m">5 Minutes</option>
-                                <option value="15m">15 Minutes</option>
-                                <option value="30m">30 Minutes</option>
-                                <option value="1h">1 Hour</option>
-                                <option value="4h">4 Hours</option>
-                                <option value="1d">1 Day</option>
-                              </select>
-                            </td>
                           </tr>
                         );
                       })}
@@ -342,10 +289,10 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
               </div>
 
               {/* Rate Limiting Info */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-4">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-2 mt-4">
                 <div className="flex items-center gap-2">
-                  <Clock size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
-                  <span className="text-xs text-yellow-700 dark:text-yellow-300">
+                  <Clock size={12} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300 whitespace-nowrap">
                     API requests per second:
                   </span>
                   <input
@@ -354,9 +301,9 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                     onChange={(e) => setRateLimit(parseInt(e.target.value) || 15)}
                     min="1"
                     max="100"
-                    className="w-16 px-2 py-1 text-xs border border-yellow-300 dark:border-yellow-600 rounded bg-white dark:bg-gray-700 text-yellow-800 dark:text-yellow-200"
+                    className="w-14 px-2 py-0.5 text-xs border border-yellow-300 dark:border-yellow-600 rounded bg-white dark:bg-gray-700 text-yellow-800 dark:text-yellow-200"
                   />
-                  <span className="text-xs text-yellow-700 dark:text-yellow-300 ml-2">
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300 ml-1">
                     Large backfills may take time. Live data uses WebSocket connections which have no rate limits.
                   </span>
                 </div>
