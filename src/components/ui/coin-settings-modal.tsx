@@ -61,6 +61,7 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
       market,
       store_live: false,
       load_history: false,
+      history_until: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days ago
       favorite: false,
       chart_resolution: '1m',
     };
@@ -257,6 +258,9 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           History
                         </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          Chart Resolution
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
@@ -299,6 +303,18 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                               </label>
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="relative">
+                                <Calendar size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                                <input
+                                  type="date"
+                                  value={setting.history_until || ''}
+                                  onChange={(e) => updateSetting(symbol, market, { history_until: e.target.value })}
+                                  disabled={!setting.load_history}
+                                  className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                />
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
                               <select
                                 value={setting.chart_resolution}
                                 onChange={(e) => updateSetting(symbol, market, { chart_resolution: e.target.value })}
@@ -326,30 +342,23 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
               </div>
 
               {/* Rate Limiting Info */}
-              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4 mt-4">
-                <div className="flex items-start gap-3">
-                  <Clock size={20} className="text-yellow-600 dark:text-yellow-400 mt-0.5" />
-                  <div>
-                    <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
-                      Rate Limiting Information
-                    </h4>
-                    <div className="flex items-center gap-4 mt-2">
-                      <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                        API requests per second:
-                      </p>
-                      <input
-                        type="number"
-                        value={rateLimit}
-                        onChange={(e) => setRateLimit(parseInt(e.target.value) || 15)}
-                        min="1"
-                        max="100"
-                        className="w-20 px-3 py-1 border border-yellow-300 dark:border-yellow-600 rounded bg-white dark:bg-gray-700 text-yellow-800 dark:text-yellow-200"
-                      />
-                    </div>
-                    <p className="text-xs text-yellow-700 dark:text-yellow-300 mt-2">
-                      Large backfills may take time. Live data uses WebSocket connections which have no rate limits.
-                    </p>
-                  </div>
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-3 mt-4">
+                <div className="flex items-center gap-2">
+                  <Clock size={14} className="text-yellow-600 dark:text-yellow-400 flex-shrink-0" />
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300">
+                    API requests per second:
+                  </span>
+                  <input
+                    type="number"
+                    value={rateLimit}
+                    onChange={(e) => setRateLimit(parseInt(e.target.value) || 15)}
+                    min="1"
+                    max="100"
+                    className="w-16 px-2 py-1 text-xs border border-yellow-300 dark:border-yellow-600 rounded bg-white dark:bg-gray-700 text-yellow-800 dark:text-yellow-200"
+                  />
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300 ml-2">
+                    Large backfills may take time. Live data uses WebSocket connections which have no rate limits.
+                  </span>
                 </div>
               </div>
             </div>
