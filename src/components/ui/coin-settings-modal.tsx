@@ -226,8 +226,11 @@ const CoinSettingsModal: React.FC<CoinSettingsModalProps> = ({
                         <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           HISTORIC
                         </th>
-                      </tr>
+                        <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                           UNTIL
+                        </th>
+                      </tr>
+                    </thead>
                     <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                       {allSymbols.map(({ symbol, market }) => {
                         const setting = getCurrentSetting(symbol, market);
