@@ -121,13 +121,13 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
       {/* Selected Symbol Display */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between px-4 py-3 bg-[#111827] dark:bg-[#111827] border border-gray-700 dark:border-gray-700 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors min-w-[200px]"
+        className="flex items-center justify-between px-3 py-2 bg-[#111827] dark:bg-[#111827] border border-gray-700 dark:border-gray-700 rounded-lg hover:bg-gray-800 dark:hover:bg-gray-800 transition-colors min-w-[150px]"
       >
-        <span className="font-bold text-white dark:text-white">
+        <span className="font-bold text-white dark:text-white text-sm">
           {displaySymbol}
         </span>
         <svg
-          className={`w-4 h-4 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-3 h-3 ml-auto transition-transform ${isOpen ? 'rotate-180' : ''}`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -138,84 +138,84 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[420px]">
+        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[315px]">
           {/* Search */}
-          <div className="p-3 border-b border-gray-700">
+          <div className="p-2 border-b border-gray-700">
             <div className="relative">
-              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search size={12} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
                 placeholder="Search symbols"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-600 rounded-lg bg-[#111827] text-white placeholder-gray-500 focus:outline-none"
+                className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-600 rounded-lg bg-[#111827] text-white placeholder-gray-500 focus:outline-none"
               />
             </div>
           </div>
 
           {/* Header Row */}
           <div className="flex items-center px-4 py-2 bg-[#1e2433] border-b border-gray-700 text-gray-400 text-xs">
-            <div className="flex items-center w-[140px]">
-              <span className="text-yellow-500 mr-2">★</span>
-              <span>COIN</span>
+            <div className="flex items-center w-[105px]">
+              <span className="text-yellow-500 mr-2 text-xs">★</span>
+              <span className="text-xs">COIN</span>
               <span className="ml-1">↑</span>
             </div>
-            <div className="w-[100px] text-right">PRICE</div>
-            <div className="w-[80px] text-right">24H</div>
-            <div className="w-[30px] text-center">L</div>
-            <div className="w-[30px] text-center">H</div>
+            <div className="w-[75px] text-right text-xs">PRICE</div>
+            <div className="w-[60px] text-right text-xs">24H</div>
+            <div className="w-[22px] text-center text-xs">L</div>
+            <div className="w-[22px] text-center text-xs">H</div>
           </div>
 
           {/* Coins list */}
           <div className="max-h-[300px] overflow-y-auto">
             {loading ? (
               <div className="p-4 text-center text-gray-400">
-                <RefreshCw size={16} className="animate-spin mx-auto mb-2" />
-                Loading...
+                <RefreshCw size={12} className="animate-spin mx-auto mb-2" />
+                <span className="text-xs">Loading...</span>
               </div>
             ) : filteredSymbols.length > 0 ? (
               filteredSymbols.map((coin) => (
                 <div
                   key={`${coin.symbol}_${coin.market}`}
-                  className={`flex items-center px-4 py-3 cursor-pointer transition-colors border-b border-gray-700 ${
+                  className={`flex items-center px-3 py-2 cursor-pointer transition-colors border-b border-gray-700 ${
                     coin.symbol === displaySymbol
                       ? "bg-[#1a2035]"
                       : "hover:bg-[#1a2035]"
                   }`}
                   onClick={() => handleSymbolSelect(coin)}
                 >
-                  <div className="flex items-center w-[140px]">
+                  <div className="flex items-center w-[105px]">
                     <span
-                      className={`text-lg mr-2 ${
+                      className={`text-sm mr-2 ${
                         favorites.has(coin.symbol) ? "text-yellow-500" : "text-gray-600"
                       }`}
                       onClick={(e) => toggleFavorite(coin.symbol, e)}
                     >
                       ★
                     </span>
-                    <span className="font-bold text-white">{coin.symbol}</span>
+                    <span className="font-bold text-white text-sm">{coin.symbol}</span>
                   </div>
-                  <div className="w-[100px] text-right font-mono text-white">
+                  <div className="w-[75px] text-right font-mono text-white text-sm">
                     {coin.price}
                   </div>
                   <div
-                    className={`w-[80px] text-right font-bold ${
+                    className={`w-[60px] text-right font-bold text-sm ${
                       (coin.changePercent || 0) >= 0 ? "text-green-500" : "text-red-500"
                     }`}
                   >
                     {coin.change}
                   </div>
-                  <div className="w-[30px] text-center">
+                  <div className="w-[22px] text-center">
                     <span
-                      className="inline-block w-3 h-3 rounded-full"
+                      className="inline-block w-2 h-2 rounded-full"
                       style={{
                         backgroundColor: "rgb(34, 197, 94)"
                       }}
                     ></span>
                   </div>
-                  <div className="w-[30px] text-center">
+                  <div className="w-[22px] text-center">
                     <span
-                      className="inline-block w-3 h-3 rounded-full"
+                      className="inline-block w-2 h-2 rounded-full"
                       style={{
                         backgroundColor: coin.market === "spot" ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
                       }}
@@ -225,24 +225,24 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
               ))
             ) : (
               <div className="p-4 text-center text-gray-400">
-                No symbols found
+                <span className="text-xs">No symbols found</span>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="p-2 border-t border-gray-700 text-xs text-gray-400 flex justify-between items-center">
+          <div className="p-1.5 border-t border-gray-700 text-xs text-gray-400 flex justify-between items-center">
             <div>
-              {filteredSymbols.length} symbols
+              <span className="text-[10px]">{filteredSymbols.length} symbols</span>
             </div>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => loadSymbols(true)}
                 disabled={loading}
-                className="p-1 text-gray-400 hover:text-white disabled:opacity-50"
+                className="p-0.5 text-gray-400 hover:text-white disabled:opacity-50"
                 title="Refresh symbols"
               >
-                <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
+                <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
               </button>
               {onSettingsClick && (
                 <button
@@ -251,10 +251,10 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                     onSettingsClick();
                     setIsOpen(false);
                   }}
-                  className="p-1 text-gray-400 hover:text-white"
+                  className="p-0.5 text-gray-400 hover:text-white"
                   title="Settings"
                 >
-                  <Settings size={14} />
+                  <Settings size={10} />
                 </button>
               )}
             </div>
