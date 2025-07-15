@@ -138,7 +138,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[315px]">
+        <div className="absolute top-full left-0 mt-1 bg-[#1e2433] dark:bg-[#1e2433] border border-gray-700 dark:border-gray-700 rounded-lg shadow-lg z-50 overflow-hidden w-[350px]">
           {/* Search */}
           <div className="p-2 border-b border-gray-700">
             <div className="relative">
@@ -155,15 +155,15 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
 
           {/* Header Row */}
           <div className="flex items-center px-4 py-2 bg-[#1e2433] border-b border-gray-700 text-gray-400 text-xs">
-            <div className="flex items-center w-[105px]">
+            <div className="flex items-center w-[100px]">
               <span className="text-yellow-500 mr-2 text-xs">★</span>
               <span className="text-xs">COIN</span>
               <span className="ml-1">↑</span>
             </div>
-            <div className="w-[75px] text-right text-xs">PRICE</div>
-            <div className="w-[60px] text-right text-xs">24H</div>
-            <div className="w-[22px] text-center text-xs">L</div>
-            <div className="w-[22px] text-center text-xs">H</div>
+            <div className="w-[80px] text-right text-xs">PRICE</div>
+            <div className="w-[70px] text-right text-xs">24H</div>
+            <div className="w-[25px] text-center text-xs">L</div>
+            <div className="w-[25px] text-center text-xs">H</div>
           </div>
 
           {/* Coins list */}
@@ -184,7 +184,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                   }`}
                   onClick={() => handleSymbolSelect(coin)}
                 >
-                  <div className="flex items-center w-[105px]">
+                  <div className="flex items-center w-[100px]">
                     <span
                       className={`text-sm mr-2 ${
                         favorites.has(coin.symbol) ? "text-yellow-500" : "text-gray-600"
@@ -195,17 +195,17 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                     </span>
                     <span className="font-bold text-white text-sm">{coin.symbol}</span>
                   </div>
-                  <div className="w-[75px] text-right font-mono text-white text-sm">
+                  <div className="w-[80px] text-right font-mono text-white text-sm">
                     {coin.price}
                   </div>
                   <div
-                    className={`w-[60px] text-right font-bold text-sm ${
+                    className={`w-[70px] text-right font-bold text-sm ${
                       (coin.changePercent || 0) >= 0 ? "text-green-500" : "text-red-500"
                     }`}
                   >
                     {coin.change}
                   </div>
-                  <div className="w-[22px] text-center">
+                  <div className="w-[25px] text-center">
                     <span
                       className="inline-block w-2 h-2 rounded-full"
                       style={{
@@ -213,7 +213,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                       }}
                     ></span>
                   </div>
-                  <div className="w-[22px] text-center">
+                  <div className="w-[25px] text-center">
                     <span
                       className="inline-block w-2 h-2 rounded-full"
                       style={{
