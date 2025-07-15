@@ -30,8 +30,8 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<keyof WhaleTransaction>("timestamp");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
-  const [selectedCoins, setSelectedCoins] = useState<Set<string>>(new Set());
-  const [showOnlySelected, setShowOnlySelected] = useState(false);
+  const [favoriteCoins, setFavoriteCoins] = useState<Set<string>>(new Set());
+  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
 
   // Sample whale transaction data
   const [whaleTransactions] = useState<WhaleTransaction[]>([
@@ -135,14 +135,39 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
   // Filter and sort transactions
   const filteredTransactions = whaleTransactions
     .filter(tx => {
-      if (showOnlySelected && selectedCoins.size > 0) {
-        return selectedCoins.has(tx.coin);
+      // Filter by favorites if "Favorites" is selected in symbol filter
+      if (symbolFilter === "Favorites") {
+        if (favoriteCoins.size === 0) return false;
+        return favoriteCoins.has(tx.coin);
       }
+      
+      // Filter by symbol
+      if (symbolFilter !== "All Symbols" && symbolFilter !== "Favorites") {
+        if (!tx.coin.toLowerCase().includes(symbolFilter.toLowerCase())) {
+          return false;
+        }
+      }
+      
+      // Filter by exchange
+      if (exchangeFilter !== "All Exchanges") {
+        if (tx.exchange !== exchangeFilter) {
+          return false;
+        }
+      }
+      
+      // Filter by trade type
+      if (tradeFilter !== "All Trades") {
+        if (tradeFilter === "Buy Only" && tx.side !== "BUY") return false;
+        if (tradeFilter === "Sell Only" && tx.side !== "SELL") return false;
+      }
+      
+      // Search filter
       if (searchQuery) {
         return tx.coin.toLowerCase().includes(searchQuery.toLowerCase()) ||
                tx.exchange.toLowerCase().includes(searchQuery.toLowerCase()) ||
                tx.maker.toLowerCase().includes(searchQuery.toLowerCase());
       }
+      
       return true;
     })
     .sort((a, b) => {
@@ -172,13 +197,13 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
   };
 
   const toggleCoinSelection = (coin: string) => {
-    const newSelected = new Set(selectedCoins);
-    if (newSelected.has(coin)) {
-      newSelected.delete(coin);
+    const newFavorites = new Set(favoriteCoins);
+    if (newFavorites.has(coin)) {
+      newFavorites.delete(coin);
     } else {
-      newSelected.add(coin);
+      newFavorites.add(coin);
     }
-    setSelectedCoins(newSelected);
+    setFavoriteCoins(newFavorites);
   };
 
   const formatAge = (timestamp: number) => {
@@ -187,10 +212,12 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
     
-    if (seconds < 60) return `${seconds} seconds ago`;
-    if (minutes < 60) return `${minutes} minutes ago`;
-    return `${hours} hours ago`;
+    if (days > 0) return `${days}d`;
+    if (hours > 0) return `${hours}h`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${seconds}s`;
   };
 
   const SortableHeader = ({ field, children }: { field: keyof WhaleTransaction; children: React.ReactNode }) => (
@@ -263,77 +290,69 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                 ))}
               </div>
             </div>
+          </div>
 
-            {/* Filters */}
-            <div className="flex items-center gap-4 mb-4">
-              <select 
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
-              >
-                <option>1 Hour</option>
-                <option>6 Hours</option>
-                <option>24 Hours</option>
-                <option>7 Days</option>
-              </select>
+          {/* Filters - Between Chart and Table */}
+          <div className="flex items-center gap-4 mb-6">
+            <select 
+              value={timeFilter}
+              onChange={(e) => setTimeFilter(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+            >
+              <option>1 Hour</option>
+              <option>6 Hours</option>
+              <option>24 Hours</option>
+              <option>7 Days</option>
+            </select>
 
-              <select 
-                value={symbolFilter}
-                onChange={(e) => setSymbolFilter(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
-              >
-                <option>All Symbols</option>
-                <option>BTC</option>
-                <option>ETH</option>
-                <option>SOL</option>
-              </select>
+            <select 
+              value={symbolFilter}
+              onChange={(e) => setSymbolFilter(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+            >
+              <option>All Symbols</option>
+              <option>⭐ Favorites</option>
+              <option>BTC</option>
+              <option>ETH</option>
+              <option>SOL</option>
+            </select>
 
-              <select 
-                value={exchangeFilter}
-                onChange={(e) => setExchangeFilter(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
-              >
-                <option>All Exchanges</option>
-                <option>Coinbase Pro</option>
-                <option>Binance</option>
-                <option>Bybit</option>
-              </select>
+            <select 
+              value={exchangeFilter}
+              onChange={(e) => setExchangeFilter(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+            >
+              <option>All Exchanges</option>
+              <option>Coinbase Pro</option>
+              <option>Binance</option>
+              <option>Bybit</option>
+            </select>
 
-              <select 
-                value={tradeFilter}
-                onChange={(e) => setTradeFilter(e.target.value)}
-                className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
-              >
-                <option>All Trades</option>
-                <option>Buy Only</option>
-                <option>Sell Only</option>
-              </select>
+            <select 
+              value={tradeFilter}
+              onChange={(e) => setTradeFilter(e.target.value)}
+              className="bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white text-sm"
+            >
+              <option>All Trades</option>
+              <option>Buy Only</option>
+              <option>Sell Only</option>
+            </select>
 
-              <div className="relative ml-auto">
-                <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="bg-gray-700 border border-gray-600 rounded pl-10 pr-4 py-2 text-white text-sm w-64"
-                />
-              </div>
+            <div className="relative ml-auto">
+              <Search size={16} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-gray-700 border border-gray-600 rounded pl-10 pr-4 py-2 text-white text-sm w-64"
+              />
             </div>
+          </div>
 
-            {/* Show Selected Toggle */}
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-sm text-gray-400">» Filtered by large transactions</span>
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={showOnlySelected}
-                  onChange={(e) => setShowOnlySelected(e.target.checked)}
-                  className="rounded"
-                />
-                Show only selected coins ({selectedCoins.size})
-              </label>
-            </div>
+          {/* Filtered by large transactions indicator */}
+          <div className="mb-4">
+            <span className="text-sm text-gray-400">» Filtered by large transactions</span>
           </div>
 
           {/* Table */}
@@ -353,7 +372,7 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                     <SortableHeader field="maker">Maker</SortableHeader>
                     <SortableHeader field="age">Age</SortableHeader>
                     <th className="px-4 py-3 text-left text-xs font-medium text-gray-400 uppercase tracking-wider">
-                      Select
+                      ⭐
                     </th>
                   </tr>
                 </thead>
@@ -388,10 +407,13 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
                       <td className="px-4 py-3">
                         <input
                           type="checkbox"
-                          checked={selectedCoins.has(tx.coin)}
+                          checked={favoriteCoins.has(tx.coin)}
                           onChange={() => toggleCoinSelection(tx.coin)}
-                          className="rounded"
+                          className="rounded text-yellow-500"
                         />
+                        {favoriteCoins.has(tx.coin) && (
+                          <span className="ml-2 text-yellow-500">⭐</span>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -401,7 +423,10 @@ const Whales = ({ onBackToTrading }: WhalesProps = {}) => {
 
             {filteredTransactions.length === 0 && (
               <div className="text-center py-12 text-gray-400">
-                No whale transactions found matching your criteria.
+                {symbolFilter === "⭐ Favorites" && favoriteCoins.size === 0 
+                  ? "No favorite coins selected. Mark coins with ⭐ to see them here."
+                  : "No whale transactions found matching your criteria."
+                }
               </div>
             )}
           </div>
