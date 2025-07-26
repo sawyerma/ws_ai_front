@@ -7,10 +7,10 @@ export default defineConfig({
     host: "::",
     port: 8080,
     proxy: {
-      '/api':       'http://localhost:8000',
-      '/ohlc':      'http://localhost:8000',
-      '/orderbook': 'http://localhost:8000',
-      '/symbols':   'http://localhost:8000'
+      '/api':       'http://localhost:8100',
+      '/ohlc':      'http://localhost:8100',
+      '/orderbook': 'http://localhost:8100',
+      '/symbols':   'http://localhost:8100'
     }
   },
   plugins: [react()],
