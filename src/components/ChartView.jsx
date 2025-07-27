@@ -11,6 +11,7 @@ export default function ChartView({
   height = 400,
   symbol = "BTCUSDT",
   market = "spot",
+  exchange = "bitget", // Exchange parameter hinzugefügt
   interval = "1m", // Zeitintervall für Kerzen
 }) {
   const chartRef = useRef(null);
@@ -345,7 +346,7 @@ export default function ChartView({
       
       // API-Call für historische Candles - PASSEND ZU DEINEM BACKEND
       const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
-      const response = await fetch(`${apiUrl}/ohlc?symbol=${symbol}&resolution=${resolution}&limit=${limit}`);
+      const response = await fetch(`${apiUrl}/ohlc?exchange=${exchange}&symbol=${symbol}&market=${market}&resolution=${resolution}&limit=${limit}`);
       
       if (response.ok) {
         const data = await response.json();
@@ -595,7 +596,7 @@ export default function ChartView({
     // WebSocket verbinden - PASSEND ZU DEINEM BACKEND
     setWsStatus("connecting");
     const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8100';
-    const wsEndpoint = wsUrl || `${wsBaseUrl}/ws/${symbol}/${market}`;
+    const wsEndpoint = wsUrl || `${wsBaseUrl}/ws/${exchange}/${symbol}/${market}`;
     const ws = new window.WebSocket(wsEndpoint);
     wsRef.current = ws;
 

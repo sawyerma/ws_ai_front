@@ -38,12 +38,14 @@ const CoinSelector = ({
   selectedCoin,
   onCoinSelect,
   selectedTradingMode = "Spot", // Neuer Parameter für Trading Mode
+  exchange = "bitget", // Exchange-Parameter hinzugefügt
   showLiveStatus = true,
   showHistStatus = true,
 }: {
   selectedCoin: string;
   onCoinSelect: (coin: CoinData) => void;
   selectedTradingMode?: string; // Trading Mode von der Navigation
+  exchange?: string; // Exchange-Parameter (bitget/binance)
   showLiveStatus?: boolean;
   showHistStatus?: boolean;
 }) => {
@@ -61,7 +63,9 @@ const CoinSelector = ({
       setError(null);
       
       try {
-        const response = await fetch("/api/symbols");
+        // Echte Backend-API verwenden statt Mock-Daten mit Exchange-Parameter
+        const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+        const response = await fetch(`${API_BASE}/symbols?exchange=${exchange}`);
         
         if (!response.ok) {
           throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -166,7 +170,7 @@ const CoinSelector = ({
     };
 
     fetchSymbols();
-  }, []);
+  }, [exchange]); // Neu laden wenn sich exchange ändert
 
   // Filtere Coins basierend auf dem ausgewählten Trading Mode
   const getFilteredCoins = () => {
