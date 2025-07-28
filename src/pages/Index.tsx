@@ -13,7 +13,7 @@ import Whales from "./Whales";
 import News from "./News";
 import TradingBot from "./TradingBot";
 import API from "./API";
-import { getSymbols, Exchange } from "../api/symbols";
+import { getSymbols, getTicker, Exchange } from "../api/symbols";
 
 interface CoinData {
   id: string;
@@ -53,15 +53,72 @@ const Index = () => {
     histStatus: "green",
   });
 
-  // Deine Marktdaten als Variablen - diese kannst du von deinem Programm übergeben
+  // Live Marktdaten aus Backend-API
   const [marketData, setMarketData] = useState({
-    change24h: "-3.56%", // Variable 1
-    high24h: "110.157,20", // Variable 2
-    low24h: "99.666,04", // Variable 3
-    volume24h: "6.08K", // Variable 4
-    turnover24h: "645.65M", // Variable 5
-    category: "Public Chain", // Variable 6
+    change24h: "-3.56%", // Fallback
+    high24h: "110.157,20", // Fallback
+    low24h: "99.666,04", // Fallback
+    volume24h: "6.08K", // Fallback
+    turnover24h: "645.65M", // Fallback
+    category: "Public Chain", // Fallback
   });
+
+  // Live-Ticker-Daten für aktuelles Symbol laden
+  useEffect(() => {
+    const loadTickerData = async () => {
+      if (!selectedCoin) return;
+      
+      try {
+        const tickerResponse = await getTicker(selectedExchange, selectedCoin, selectedMarket);
+        
+        if (tickerResponse && tickerResponse.tickers && tickerResponse.tickers.length > 0) {
+          // Finde den passenden Ticker für den aktuellen Market
+          const ticker = tickerResponse.tickers.find((t: any) => 
+            t.market_type === selectedMarket
+          ) || tickerResponse.tickers[0]; // Fallback zum ersten Ticker
+          
+          // Backend-Daten zu Frontend-Format konvertieren
+          const formatPrice = (price: number) => {
+            if (price === 0) return '0.00';
+            return price.toLocaleString('de-DE', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            });
+          };
+          
+          const formatVolume = (volume: number) => {
+            if (volume > 1000000) {
+              return `${(volume / 1000000).toFixed(2)}M`;
+            } else if (volume > 1000) {
+              return `${(volume / 1000).toFixed(2)}K`;
+            }
+            return volume.toFixed(2);
+          };
+          
+          setMarketData({
+            change24h: ticker.changeRate ? `${(ticker.changeRate * 100).toFixed(2)}%` : '0.00%',
+            high24h: formatPrice(ticker.high || 0),
+            low24h: formatPrice(ticker.low || 0),
+            volume24h: formatVolume(ticker.volume || 0),
+            turnover24h: formatVolume((ticker.volume || 0) * (ticker.last || 0)),
+            category: selectedMarket === 'futures' ? 'Futures' : 'Spot Trading',
+          });
+          
+          console.log(`[Index] Updated market data for ${selectedCoin}:`, ticker);
+        }
+      } catch (err) {
+        console.error('Failed to load ticker data:', err);
+        // Keep fallback data on error
+      }
+    };
+
+    loadTickerData();
+    
+    // Aktualisiere alle 10 Sekunden
+    const interval = setInterval(loadTickerData, 10000);
+    
+    return () => clearInterval(interval);
+  }, [selectedCoin, selectedMarket, selectedExchange]);
 
   // Trading Mode State (Spot oder Futures-Option)
   const [tradingMode, setTradingMode] = useState("Spot");

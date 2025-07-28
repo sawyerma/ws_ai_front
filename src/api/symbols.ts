@@ -425,6 +425,35 @@ export async function getBitgetSettings(): Promise<CoinSetting[]> {
   return getSettings('bitget');
 }
 
+// Get ticker data for specific symbol
+export async function getTicker(exchange: Exchange = DEFAULT_EXCHANGE, symbol: string, market?: string): Promise<any> {
+  try {
+    const params = new URLSearchParams();
+    params.append('exchange', exchange);
+    params.append('symbol', symbol);
+    if (market) params.append('market_type', market);
+    
+    const response = await fetch(`${API_BASE}/ticker?${params.toString()}`, {
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000,
+    } as any);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    console.log(`[SymbolsAPI] Fetched ticker for ${symbol} from ${exchange}:`, data);
+    return data;
+  } catch (error) {
+    console.error(`[SymbolsAPI] Failed to fetch ticker for ${symbol}:`, error);
+    throw error;
+  }
+}
+
 // Clear cache function for manual refresh
 export function clearCache(): void {
   cache.clear();
