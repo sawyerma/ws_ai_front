@@ -263,12 +263,12 @@ export async function fetchAllTickers(): Promise<BackendTicker[]> {
 }
 
 // Main function to get symbols with price
-export async function getSymbols(): Promise<ApiResponse> {
+export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<ApiResponse> {
   try {
     // Fetch both symbols and tickers in parallel
     const [symbolsData, tickersData] = await Promise.all([
-      fetchSymbols(),
-      fetchTickers(),
+      fetchSymbols(exchange),
+      fetchTickers(exchange),
     ]);
     
     // Create ticker lookup map

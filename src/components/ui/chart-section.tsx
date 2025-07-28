@@ -14,12 +14,14 @@ const ChartSection = ({
   selectedMarket = "spot",
   selectedInterval = "1m",
   selectedIndicators = [],
+  selectedExchange = "bitget",
   onIndicatorRemove,
 }: {
   selectedCoin?: string;
   selectedMarket?: string;
   selectedInterval?: string;
   selectedIndicators?: string[];
+  selectedExchange?: string;
   onIndicatorRemove?: (indicator: string) => void;
 }) => {
   return (
@@ -37,6 +39,7 @@ const ChartSection = ({
                 selectedMarket={selectedMarket}
                 selectedInterval={selectedInterval}
                 selectedIndicators={selectedIndicators}
+                selectedExchange={selectedExchange}
                 onIndicatorRemove={onIndicatorRemove}
               />
             </div>

@@ -28,6 +28,7 @@ interface TradingChartProps {
   selectedMarket?: string;
   selectedInterval?: string;
   selectedIndicators?: string[];
+  selectedExchange?: string;
   onIndicatorRemove?: (indicator: string) => void;
 }
 
@@ -36,6 +37,7 @@ const TradingChart = ({
   selectedMarket = "spot",
   selectedInterval = "1m",
   selectedIndicators = [],
+  selectedExchange = "bitget",
   onIndicatorRemove
 }: TradingChartProps) => {
   const [panels, setPanels] = useState<ChartPanel[]>([

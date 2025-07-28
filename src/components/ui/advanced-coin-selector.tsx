@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, RefreshCw, Settings } from 'lucide-react';
-import { getSymbols, ApiSymbol, clearCache } from '../../api/symbols';
+import { getSymbols, ApiSymbol, clearCache, Exchange } from '../../api/symbols';
 
 interface AdvancedCoinSelectorProps {
   selectedSymbol: string;
   onSymbolSelect: (symbol: string, market: string) => void;
   onSettingsClick?: () => void;
+  exchange?: Exchange;
+  selectedMarket?: string;
   maxHeight?: number;
 }
 
@@ -13,6 +15,8 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
   selectedSymbol,
   onSymbolSelect,
   onSettingsClick,
+  exchange = "bitget",
+  selectedMarket,
   maxHeight = 500,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -51,9 +55,9 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
     setError(null);
     
     try {
-      const response = await getSymbols();
+      const response = await getSymbols(exchange);
       setSymbols(response.symbols);
-      console.log(`[CoinSelector] Loaded ${response.symbols.length} symbols`);
+      console.log(`[CoinSelector] Loaded ${response.symbols.length} symbols from ${exchange}`);
     } catch (err) {
       setError('Failed to load symbols');
       console.error('Error loading symbols:', err);
@@ -62,14 +66,36 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
     }
   };
 
-  // Load symbols on mount
+  // Load symbols on mount and when exchange changes
   useEffect(() => {
     loadSymbols();
-  }, []);
+  }, [exchange]);
 
-  // Filter and sort symbols
+  // Market mapping: TradingNav → API market values
+  const getMarketFilter = (selectedMarket?: string): string | null => {
+    if (!selectedMarket) return null;
+    
+    // Backend hat nur "spot" und "futures" - alle Futures-Typen → "futures"
+    const marketMap: { [key: string]: string } = {
+      "Spot": "spot",
+      "USDT-M Futures": "futures",
+      "Coin-M Perpetual-Futures": "futures", 
+      "Coin-M Delivery-Futures": "futures",
+      "USDC-M Futures": "futures",
+    };
+    
+    return marketMap[selectedMarket] || null;
+  };
+
+  // Filter and sort symbols with market filtering
   const filteredSymbols = useMemo(() => {
     let filtered = symbols;
+
+    // Filter by selected market type
+    const marketFilter = getMarketFilter(selectedMarket);
+    if (marketFilter) {
+      filtered = filtered.filter(symbol => symbol.market === marketFilter);
+    }
 
     // Filter by search term
     if (searchTerm) {
@@ -91,7 +117,7 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
     });
 
     return filtered;
-  }, [symbols, searchTerm, favorites]);
+  }, [symbols, searchTerm, favorites, selectedMarket]);
 
   // Toggle favorite
   const toggleFavorite = (symbol: string, e: React.MouseEvent) => {

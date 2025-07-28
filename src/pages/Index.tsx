@@ -13,7 +13,7 @@ import Whales from "./Whales";
 import News from "./News";
 import TradingBot from "./TradingBot";
 import API from "./API";
-import { getSymbols } from "../api/symbols";
+import { getSymbols, Exchange } from "../api/symbols";
 
 interface CoinData {
   id: string;
@@ -35,6 +35,7 @@ const Index = () => {
   const [selectedMarket, setSelectedMarket] = useState("spot");
   const [selectedInterval, setSelectedInterval] = useState("1m");
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
+  const [selectedExchange, setSelectedExchange] = useState<Exchange>("bitget");
   const [symbols, setSymbols] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,13 +66,14 @@ const Index = () => {
   // Trading Mode State (Spot oder Futures-Option)
   const [tradingMode, setTradingMode] = useState("Spot");
 
-  // Load symbols from API
+  // Load symbols from API with exchange parameter
   useEffect(() => {
     const loadSymbols = async () => {
       try {
-        const response = await getSymbols();
+        setLoading(true);
+        const response = await getSymbols(selectedExchange);
         setSymbols(response.symbols);
-        console.log(`[Index] Loaded ${response.symbols.length} symbols`);
+        console.log(`[Index] Loaded ${response.symbols.length} symbols from ${selectedExchange}`);
       } catch (err) {
         setError('Failed to load symbols');
         console.error('Error loading symbols:', err);
@@ -81,7 +83,7 @@ const Index = () => {
     };
 
     loadSymbols();
-  }, []);
+  }, [selectedExchange]); // Reload when exchange changes
 
   const handleSymbolSelect = (symbol: string, market: string) => {
     setSelectedCoin(symbol);
@@ -129,6 +131,10 @@ const Index = () => {
     setSelectedIndicators(prev => prev.filter(i => i !== indicator));
   };
 
+  const handleExchangeChange = (exchange: string) => {
+    setSelectedExchange(exchange as Exchange);
+  };
+
   // Show different views based on mode
   if (viewMode === "database") {
     return <Database onBackToTrading={() => setViewMode("trading")} />;
@@ -163,6 +169,7 @@ const Index = () => {
         {/* Top Navigation */}
         <TradingNav
           onTradingModeChange={setTradingMode}
+          onExchangeChange={handleExchangeChange}
           onViewChange={setViewMode}
         />
 
@@ -190,6 +197,8 @@ const Index = () => {
                 selectedSymbol={currentCoinData.symbol}
                 onSymbolSelect={handleSymbolSelect}
                 onSettingsClick={() => setSettingsModalOpen(true)}
+                exchange={selectedExchange}
+                selectedMarket={tradingMode}
               />
             )}
           </div>
@@ -216,6 +225,7 @@ const Index = () => {
           selectedMarket={currentCoinData.market}
           selectedInterval={selectedInterval}
           selectedIndicators={selectedIndicators}
+          selectedExchange={selectedExchange}
           onIndicatorRemove={handleIndicatorRemove}
         />
 

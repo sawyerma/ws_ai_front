@@ -4,15 +4,18 @@ import SettingsModal from "./settings-modal";
 
 interface TradingNavProps {
   onTradingModeChange?: (mode: string) => void;
+  onExchangeChange?: (exchange: string) => void;
   onViewChange?: (
     view: "trading" | "database" | "ai" | "ml" | "whales" | "news" | "bot" | "api",
   ) => void;
 }
 
-const TradingNav = ({ onTradingModeChange, onViewChange }: TradingNavProps) => {
+const TradingNav = ({ onTradingModeChange, onExchangeChange, onViewChange }: TradingNavProps) => {
   const [activeTab, setActiveTab] = useState("Spot");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [selectedExchange, setSelectedExchange] = useState("Bitget");
+  const [isExchangeDropdownOpen, setIsExchangeDropdownOpen] = useState(false);
 
   const marketOptions = [
     {
@@ -159,14 +162,59 @@ const TradingNav = ({ onTradingModeChange, onViewChange }: TradingNavProps) => {
         ))}
       </div>
 
-      {/* Right side: Theme toggle */}
-      <ThemeToggle />
+      {/* Right side: Exchange selector + Theme toggle */}
+      <div className="flex items-center gap-3">
+        {/* Exchange Dropdown */}
+        <div className="relative">
+          <button
+            className="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded font-medium text-sm transition-colors text-[#222] dark:text-white"
+            onClick={() => setIsExchangeDropdownOpen(!isExchangeDropdownOpen)}
+          >
+            {selectedExchange} ▽
+          </button>
+          
+          {/* Exchange Dropdown Menu */}
+          {isExchangeDropdownOpen && (
+            <div className="absolute top-full right-0 mt-2 z-50 w-32 bg-white dark:bg-gray-800 rounded-lg shadow-xl border dark:border-gray-600">
+              <div
+                className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium text-[#222] dark:text-white"
+                onClick={() => {
+                  setSelectedExchange("Bitget");
+                  setIsExchangeDropdownOpen(false);
+                  if (onExchangeChange) {
+                    onExchangeChange("bitget");
+                  }
+                }}
+              >
+                Bitget
+              </div>
+              <div
+                className="p-2 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer text-sm font-medium text-[#222] dark:text-white"
+                onClick={() => {
+                  setSelectedExchange("Binance");
+                  setIsExchangeDropdownOpen(false);
+                  if (onExchangeChange) {
+                    onExchangeChange("binance");
+                  }
+                }}
+              >
+                Binance
+              </div>
+            </div>
+          )}
+        </div>
+        
+        <ThemeToggle />
+      </div>
 
-      {/* Overlay to close dropdown */}
-      {isDropdownOpen && (
+      {/* Overlay to close dropdowns */}
+      {(isDropdownOpen || isExchangeDropdownOpen) && (
         <div
           className="fixed inset-0 z-40"
-          onClick={() => setIsDropdownOpen(false)}
+          onClick={() => {
+            setIsDropdownOpen(false);
+            setIsExchangeDropdownOpen(false);
+          }}
         />
       )}
 

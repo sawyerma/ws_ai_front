@@ -53,8 +53,15 @@ const Orderbook = ({
 
   // Parse symbol for API calls
   const getSymbolAndMarket = () => {
-    const [base, quote] = selectedCoin.split("/");
-    const symbol = `${base}${quote}`; // BTCUSDT format for API
+    // Handle both "BTC/USDT" and "BTCUSDT" formats
+    let symbol: string;
+    if (selectedCoin.includes("/")) {
+      const [base, quote] = selectedCoin.split("/");
+      symbol = `${base}${quote}`; // "BTC/USDT" → "BTCUSDT"
+    } else {
+      symbol = selectedCoin; // Already in "BTCUSDT" format
+    }
+    
     const market = "spot"; // Default to spot, could be dynamic
     return { symbol, market };
   };
@@ -75,7 +82,7 @@ const Orderbook = ({
     setError(null);
     
     try {
-      const response = await fetch(`/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
+      const response = await fetch(`http://localhost:8100/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -156,13 +163,9 @@ const Orderbook = ({
     };
   }, [selectedCoin]);
 
-  // Fetch orderbook periodically
+  // Initial orderbook fetch only - no polling, pure WebSocket updates
   useEffect(() => {
-    fetchOrderbook(); // Initial fetch
-    
-    const interval = setInterval(fetchOrderbook, 2000); // Update every 2 seconds
-    
-    return () => clearInterval(interval);
+    fetchOrderbook(); // Single initial fetch only
   }, [selectedCoin]);
 
   // Use live data if available, fallback to props

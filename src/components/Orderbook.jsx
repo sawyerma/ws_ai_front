@@ -3,8 +3,7 @@ import React, { useEffect, useState } from "react";
 export default function Orderbook({
   symbol = "BTCUSDT",
   market = "spot",
-  exchange = "bitget", // New: Exchange parameter with backward compatibility
-  apiBase = "http://localhost:8100", // Fixed: Correct API port
+  apiBase = "http://localhost:8000",  // ggf. anpassen
   limit = 15
 }) {
   const [orderbook, setOrderbook] = useState({ asks: [], bids: [] });
@@ -17,8 +16,8 @@ export default function Orderbook({
       setLoading(true);
       setError(null);
       try {
-        // New unified API format: /orderbook?exchange={exchange}&symbol={symbol}&market={market}&limit={limit}
-        const url = `${apiBase}/orderbook?exchange=${exchange}&symbol=${symbol}&market=${market}&limit=${limit}`;
+        const market_type = market === "spot" ? "spot" : market === "usdtm" ? "usdtm" : "coinm";
+        const url = `${apiBase}/orderbook?symbol=${symbol}&market_type=${market_type}&limit=${limit}`;
         const resp = await fetch(url);
         const data = await resp.json();
         if (!ignore) setOrderbook({ asks: data.asks || [], bids: data.bids || [] });
@@ -31,7 +30,7 @@ export default function Orderbook({
     fetchOrderbook();
     const interval = setInterval(fetchOrderbook, 2000); // Refresh alle 2s
     return () => { ignore = true; clearInterval(interval); };
-  }, [symbol, market, exchange, apiBase, limit]);
+  }, [symbol, market, apiBase, limit]);
 
   return (
     <div className="p-4 bg-white dark:bg-gray-900 rounded-xl shadow w-full max-w-md mt-4">
