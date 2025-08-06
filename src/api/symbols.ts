@@ -37,7 +37,7 @@ interface BackendSymbolsResponse {
 }
 
 // Configuration
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
 const CACHE_TTL = 300000; // 5 minutes for symbols
 const TICKER_CACHE_TTL = 10000; // 10 seconds for tickers
 
@@ -152,7 +152,7 @@ export async function fetchSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promi
   if (cached) return cached;
   
   try {
-    const response = await fetch(`${API_BASE}/symbols?exchange=${exchange}`, {
+    const response = await fetch(`${API_BASE}/market/symbols?exchange=${exchange}`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -211,7 +211,7 @@ export async function fetchTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promi
   if (cached) return cached;
   
   try {
-    const response = await fetch(`${API_BASE}/ticker?exchange=${exchange}`, {
+    const response = await fetch(`${API_BASE}/market/ticker?exchange=${exchange}`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
@@ -342,7 +342,7 @@ export async function getSettings(exchange?: Exchange, symbol?: string, market?:
     if (market) params.append('market', market);
     
     const queryString = params.toString();
-    const url = `${API_BASE}/settings${queryString ? `?${queryString}` : ''}`;
+    const url = `${API_BASE}/config/settings${queryString ? `?${queryString}` : ''}`;
     
     const response = await fetch(url, {
       headers: {
@@ -394,7 +394,7 @@ export async function saveSettings(settings: CoinSetting[]): Promise<boolean> {
         : [(setting as any).db_resolution || 60]
     }));
     
-    const response = await fetch(`${API_BASE}/settings`, {
+    const response = await fetch(`${API_BASE}/config/settings`, {
       method: 'PUT',
       headers: {
         'Accept': 'application/json',
@@ -433,7 +433,7 @@ export async function getTicker(exchange: Exchange = DEFAULT_EXCHANGE, symbol: s
     params.append('symbol', symbol);
     if (market) params.append('market_type', market);
     
-    const response = await fetch(`${API_BASE}/ticker?${params.toString()}`, {
+    const response = await fetch(`${API_BASE}/market/ticker?${params.toString()}`, {
       headers: {
         'Accept': 'application/json',
         'Content-Type': 'application/json',
