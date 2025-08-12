@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-// API endpoint for symbols data
+// --- INTERFACES ---
+
 export interface ApiSymbol {
   symbol: string;
   market: string;
@@ -13,7 +14,6 @@ export interface ApiResponse {
   symbols: ApiSymbol[];
 }
 
-// Backend API interfaces
 interface BackendSymbol {
   symbol: string;
   market_type: string;
@@ -38,62 +38,41 @@ interface BackendSymbolsResponse {
   db_symbols: any[];
 }
 
-// Configuration
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
-const CACHE_TTL = 300000; // 5 minutes for symbols
-const TICKER_CACHE_TTL = 10000; // 10 seconds for tickers
+export interface CoinSetting {
+  exchange?: string;
+  symbol: string;
+  market: string;
+  store_live: boolean;
+  load_history: boolean;
+  history_until?: string;
+  favorite: boolean;
+  db_resolutions: number[];
+  chart_resolution: string;
+}
 
-// Axios instance
+export type Exchange = 'binance' | 'bitget';
+export const DEFAULT_EXCHANGE: Exchange = 'bitget';
+
+// --- CONFIGURATION ---
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
 const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
 });
 
-// Globaler Error-Handler (Interceptor)
 apiClient.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status >= 500) {
-      // Hier könnte eine globale Toast-Notification ausgelöst werden
       console.error("Server-Fehler erkannt:", error.response.data);
     }
     return Promise.reject(error);
   }
 );
 
+// --- HELPERS ---
 
-// Cache storage
-interface CacheEntry<T> {
-  data: T;
-  timestamp: number;
-  ttl: number;
-}
-
-const cache = new Map<string, CacheEntry<any>>();
-
-// Cache utilities
-function getCached<T>(key: string): T | null {
-  const entry = cache.get(key);
-  if (!entry) return null;
-  
-  if (Date.now() - entry.timestamp > entry.ttl) {
-    cache.delete(key);
-    return null;
-  }
-  
-  return entry.data;
-}
-
-function setCache<T>(key: string, data: T, ttl: number): void {
-  cache.set(key, {
-    data,
-    timestamp: Date.now(),
-    ttl,
-  });
-}
-
-
-// Format symbol for display (BTCUSDT -> BTC/USDT)
 function formatSymbol(symbol: string): string {
   if (symbol.includes('_')) return symbol.replace('_', '/').toUpperCase();
   if (symbol.endsWith('USDT')) return `${symbol.slice(0, -4)}/USDT`;
@@ -102,7 +81,6 @@ function formatSymbol(symbol: string): string {
   return symbol;
 }
 
-// Format market type for display
 function formatMarketType(marketType: string): string {
   const marketMap: { [key: string]: string } = {
     'spot': 'spot', 'usdtm': 'USDT-M', 'coinm': 'COIN-M', 'usdcm': 'USDC-M',
@@ -111,7 +89,6 @@ function formatMarketType(marketType: string): string {
   return marketMap[marketType] || marketType;
 }
 
-// Format price for display
 function formatPrice(price: number): string {
   if (price === 0) return '0.00';
   if (price < 1) return price.toFixed(6);
@@ -120,7 +97,6 @@ function formatPrice(price: number): string {
   return price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Format change percentage
 function formatChangePercent(changeRate: number): { change: string; changePercent: number } {
   const changePercent = changeRate * 100;
   const sign = changePercent >= 0 ? '+' : '';
@@ -130,40 +106,34 @@ function formatChangePercent(changeRate: number): { change: string; changePercen
   };
 }
 
-// Exchange configuration
-export type Exchange = 'binance' | 'bitget';
-export const DEFAULT_EXCHANGE: Exchange = 'bitget';
+function parseTimeframe(tf: string): number {
+  const unit = tf.slice(-1);
+  const value = parseInt(tf.slice(0, -1), 10);
+  if (isNaN(value)) return 3600000;
+  switch(unit) {
+    case 'm': return value * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    default: return 3600000;
+  }
+}
 
-// Fetch symbols from backend with exchange support
-export async function fetchSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendSymbolsResponse> {
-  const cacheKey = `symbols_${exchange}`;
-  const cached = getCached<BackendSymbolsResponse>(cacheKey);
-  if (cached) return cached;
-  
+// --- API FUNCTIONS ---
+
+async function fetchRawSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendSymbolsResponse> {
   try {
     const response = await apiClient.get(`/api/market/symbols?exchange=${exchange}`);
-    const data = response.data;
-    setCache(cacheKey, data, CACHE_TTL);
-    console.log(`[SymbolsAPI] Fetched ${data.symbols?.length || 0} symbols from ${exchange}`);
-    return data;
+    return response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch symbols from ${exchange}:`, error);
     throw error;
   }
 }
 
-// Fetch tickers from backend with exchange support
-export async function fetchTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendTicker[]> {
-  const cacheKey = `tickers_${exchange}`;
-  const cached = getCached<BackendTicker[]>(cacheKey);
-  if (cached) return cached;
-  
+async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendTicker[]> {
   try {
     const response = await apiClient.get(`/api/market/ticker?exchange=${exchange}`);
-    const data = response.data;
-    const tickers = data.tickers || data;
-    setCache(cacheKey, tickers, TICKER_CACHE_TTL);
-    console.log(`[SymbolsAPI] Fetched ${tickers.length} tickers from ${exchange}`);
+    const tickers = response.data.tickers || response.data;
     return tickers;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch tickers from ${exchange}:`, error);
@@ -171,12 +141,11 @@ export async function fetchTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promi
   }
 }
 
-// Main function to get symbols with price
 export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<ApiResponse> {
   try {
     const [symbolsData, tickersData] = await Promise.all([
-      fetchSymbols(exchange),
-      fetchTickers(exchange),
+      fetchRawSymbols(exchange),
+      fetchRawTickers(exchange),
     ]);
     
     const tickerMap = new Map<string, BackendTicker>();
@@ -202,9 +171,7 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
     return {
       symbols: symbols.sort((a, b) => {
         if (a.market !== b.market) {
-          if (a.market === 'spot') return -1;
-          if (b.market === 'spot') return 1;
-          return a.market.localeCompare(b.market);
+          return a.market === 'spot' ? -1 : 1;
         }
         return a.symbol.localeCompare(b.symbol);
       }),
@@ -215,75 +182,15 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
   }
 }
 
-// Settings API functions
-export interface CoinSetting {
-  exchange?: string;
-  symbol: string;
-  market: string;
-  store_live: boolean;
-  load_history: boolean;
-  history_until?: string;
-  favorite: boolean;
-  db_resolutions: number[];
-  chart_resolution: string;
-}
-
-export async function getSettings(exchange?: Exchange, symbol?: string, market?: string): Promise<CoinSetting[]> {
-  try {
-    const params = new URLSearchParams();
-    if (exchange) params.append('exchange', exchange);
-    if (symbol) params.append('symbol', symbol);
-    if (market) params.append('market', market);
-    
-    const response = await apiClient.get(`/api/config/settings`, { params });
-    return response.data;
-  } catch (error) {
-    console.error('[SymbolsAPI] Failed to fetch settings:', error);
-    return [];
-  }
-}
-
-export async function saveSettings(settings: CoinSetting[]): Promise<boolean> {
-  try {
-    const settingsWithExchange = settings.map(setting => ({
-      ...setting,
-      exchange: setting.exchange || DEFAULT_EXCHANGE,
-      db_resolutions: Array.isArray(setting.db_resolutions) ? setting.db_resolutions : [(setting as any).db_resolution || 60]
-    }));
-    
-    await apiClient.put(`/api/config/settings`, settingsWithExchange);
-    return true;
-  } catch (error) {
-    console.error('[SymbolsAPI] Failed to save settings:', error);
-    return false;
-  }
-}
-
 export async function getTicker(exchange: Exchange = DEFAULT_EXCHANGE, symbol: string, market?: string): Promise<any> {
   try {
-    const params = new URLSearchParams();
-    params.append('exchange', exchange);
-    params.append('symbol', symbol);
-    if (market) params.append('market_type', market);
-    
-    const response = await apiClient.get(`/api/market/ticker`, { params });
+    const response = await apiClient.get(`/api/market/ticker`, { 
+      params: { exchange, symbol, market_type: market } 
+    });
     return response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch ticker for ${symbol}:`, error);
     throw error;
-  }
-}
-
-// --- Integration from umsetzen_6.md ---
-function parseTimeframe(tf: string): number {
-  const unit = tf.slice(-1);
-  const value = parseInt(tf.slice(0, -1), 10);
-  if (isNaN(value)) return 3600000;
-  switch(unit) {
-    case 'm': return value * 60 * 1000;
-    case 'h': return value * 60 * 60 * 1000;
-    case 'd': return value * 24 * 60 * 60 * 1000;
-    default: return 3600000;
   }
 }
 
@@ -320,3 +227,9 @@ export const getLatestUserConfig = async () => {
         throw error;
     }
 };
+
+export function clearCache(): void {
+  // This is a placeholder as we removed the manual cache.
+  // React Query handles caching now.
+  console.log('[SymbolsAPI] Cache management is now handled by React Query.');
+}
