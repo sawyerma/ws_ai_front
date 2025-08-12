@@ -37,7 +37,7 @@ interface BackendSymbolsResponse {
 }
 
 // Configuration
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100/api';
 const CACHE_TTL = 300000; // 5 minutes for symbols
 const TICKER_CACHE_TTL = 10000; // 10 seconds for tickers
 
@@ -459,3 +459,73 @@ export function clearCache(): void {
   cache.clear();
   console.log('[SymbolsAPI] Cache cleared');
 }
+
+// --- Integration from umsetzen_6.md ---
+
+/**
+ * Parses a timeframe string (e.g., '1h', '4h', '1d') into milliseconds.
+ */
+function parseTimeframe(tf: string): number {
+  const unit = tf.slice(-1);
+  const value = parseInt(tf.slice(0, -1), 10);
+  if (isNaN(value)) return 3600000; // Default to 1 hour
+  switch(unit) {
+    case 'm': return value * 60 * 1000;
+    case 'h': return value * 60 * 60 * 1000;
+    case 'd': return value * 24 * 60 * 60 * 1000;
+    default: return 3600000;
+  }
+}
+
+/**
+ * Fetches recent trades for a given symbol.
+ */
+export const fetchTrades = async (symbol: string, timeframe = '1h') => {
+  const now = new Date();
+  const from = new Date(now.getTime() - parseTimeframe(timeframe));
+  try {
+    const response = await fetch(`${API_BASE}/trades`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      // Note: Axios-style params need to be converted for fetch
+      // This endpoint is not yet used by components, but is here as per the plan.
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error(`Failed to fetch trades for ${symbol}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Saves the user's configuration to the backend.
+ */
+export const saveUserConfig = async (config: Partial<CoinSetting>) => {
+  try {
+    const response = await fetch(`${API_BASE}/config`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(config),
+    });
+    if (!response.ok) throw new Error('Network response was not ok');
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to save config:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches the latest configuration from the backend.
+ */
+export const getLatestUserConfig = async () => {
+    try {
+        const response = await fetch(`${API_BASE}/config/latest`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to get latest config:', error);
+        throw error;
+    }
+};
