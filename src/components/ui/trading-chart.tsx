@@ -30,6 +30,8 @@ interface TradingChartProps {
   selectedIndicators?: string[];
   selectedExchange?: string;
   onIndicatorRemove?: (indicator: string) => void;
+  historicalData?: any[];
+  isLoading?: boolean;
 }
 
 const TradingChart = ({
@@ -38,7 +40,9 @@ const TradingChart = ({
   selectedInterval = "1m",
   selectedIndicators = [],
   selectedExchange = "bitget",
-  onIndicatorRemove
+  onIndicatorRemove,
+  historicalData,
+  isLoading
 }: TradingChartProps) => {
   const [panels, setPanels] = useState<ChartPanel[]>([
     {
@@ -527,6 +531,8 @@ const TradingChart = ({
           interval={selectedInterval}
           width={800}
           height={400}
+          historicalData={historicalData}
+          isLoading={isLoading}
         />
         
         {/* Main Chart Label (always show for main panel) */}

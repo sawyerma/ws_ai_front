@@ -16,6 +16,8 @@ const ChartSection = ({
   selectedIndicators = [],
   selectedExchange = "bitget",
   onIndicatorRemove,
+  historicalData,
+  isLoading,
 }: {
   selectedCoin?: string;
   selectedMarket?: string;
@@ -23,6 +25,8 @@ const ChartSection = ({
   selectedIndicators?: string[];
   selectedExchange?: string;
   onIndicatorRemove?: (indicator: string) => void;
+  historicalData?: any[];
+  isLoading?: boolean;
 }) => {
   return (
     <div className="mt-1 space-y-4">
@@ -41,6 +45,8 @@ const ChartSection = ({
                 selectedIndicators={selectedIndicators}
                 selectedExchange={selectedExchange}
                 onIndicatorRemove={onIndicatorRemove}
+                historicalData={historicalData}
+                isLoading={isLoading}
               />
             </div>
           </ResizablePanel>

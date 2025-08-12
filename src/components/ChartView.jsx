@@ -11,8 +11,10 @@ export default function ChartView({
   height = 400,
   symbol = "BTCUSDT",
   market = "spot",
-  exchange = "bitget", // Exchange parameter hinzugefügt
-  interval = "1m", // Zeitintervall für Kerzen
+  exchange = "bitget",
+  interval = "1m",
+  historicalData, // NEU: Daten von oben
+  isLoading: isLoadingProp, // NEU: Ladezustand von oben
 }) {
   const chartRef = useRef(null);
   const chartInstance = useRef(null);
@@ -23,7 +25,6 @@ export default function ChartView({
   const isInitializedRef = useRef(false);
   
   // Performance: Debounced states
-  const [isLoading, setIsLoading] = useState(true);
   const [wsStatus, setWsStatus] = useState("disconnected");
   const [lastUpdate, setLastUpdate] = useState(null);
   const [candleCount, setCandleCount] = useState(0);
@@ -334,115 +335,7 @@ export default function ChartView({
     }
   }, [chartSettings, isDarkMode, currentInterval]);
 
-  // Historische Daten via REST laden
-  const loadHistoricalData = async () => {
-    try {
-      setIsLoading(true);
-      
-      const resolution = mapIntervalToResolution(currentInterval);
-      const limit = getHistoryLimit(currentInterval);
-      
-      console.log(`[ChartView] Loading historical data: ${symbol}, resolution: ${resolution}, limit: ${limit}`);
-      
-      // API-Call für historische Candles - PASSEND ZU DEINEM BACKEND
-      const apiUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
-      const response = await fetch(`${apiUrl}/ohlc?exchange=${exchange}&symbol=${symbol}&market=${market}&resolution=${resolution}&limit=${limit}`);
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data && Array.isArray(data)) {
-          // Historische Daten ins Chart laden - PASSEND ZU DEINER DB-STRUKTUR
-          const formattedCandles = data.map(candle => ({
-            time: Math.floor(new Date(candle.ts).getTime() / 1000), // ts statt timestamp
-            open: Number(candle.open),
-            high: Number(candle.high),
-            low: Number(candle.low),
-            close: Number(candle.close),
-            volume: Number(candle.volume || 0),
-          }));
-          
-          // Sortieren nach Zeit (älteste zuerst)
-          formattedCandles.sort((a, b) => a.time - b.time);
-          
-          // Update state für memoized calculations
-          setCandleData(formattedCandles);
-          
-          // Alle historischen Candles auf einmal setzen
-          if (seriesRef.current && formattedCandles.length > 0) {
-            seriesRef.current.setData(formattedCandles);
-            setCandleCount(formattedCandles.length);
-            
-            // Volume data setzen falls Volume-Series existiert
-            if (volumeSeriesRef.current) {
-              const volumeData = formattedCandles.map(candle => ({
-                time: candle.time,
-                value: candle.volume,
-                color: candle.close >= candle.open ? '#26a69a' : '#ef5350',
-              }));
-              volumeSeriesRef.current.setData(volumeData);
-            }
-            
-            console.log(`[ChartView] Loaded ${formattedCandles.length} historical candles for ${symbol} (${resolution})`);
-          }
-        }
-      } else {
-        console.warn(`[ChartView] Failed to load historical data: ${response.status}`);
-        // Fallback: Dummy-Candle für Chart-Initialisierung
-        if (seriesRef.current) {
-          const now = Math.floor(Date.now() / 1000);
-          const dummyCandle = {
-            time: now - 60,
-            open: 100000,
-            high: 100500,
-            low: 99500,
-            close: 100200,
-            volume: 1000,
-          };
-          seriesRef.current.setData([dummyCandle]);
-          setCandleData([dummyCandle]);
-          
-          if (volumeSeriesRef.current) {
-            volumeSeriesRef.current.setData([{
-              time: dummyCandle.time,
-              value: dummyCandle.volume,
-              color: '#26a69a',
-            }]);
-          }
-          
-          setCandleCount(1);
-        }
-      }
-    } catch (error) {
-      console.error("[ChartView] Error loading historical data:", error);
-      // Fallback bei Netzwerkfehler
-      if (seriesRef.current) {
-        const now = Math.floor(Date.now() / 1000);
-        const dummyCandle = {
-          time: now - 60,
-          open: 100000,
-          high: 100500,
-          low: 99500,
-          close: 100200,
-          volume: 1000,
-        };
-        seriesRef.current.setData([dummyCandle]);
-        setCandleData([dummyCandle]);
-        
-        if (volumeSeriesRef.current) {
-          volumeSeriesRef.current.setData([{
-            time: dummyCandle.time,
-            value: dummyCandle.volume,
-            color: '#26a69a',
-          }]);
-        }
-        
-        setCandleCount(1);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // Die Lade-Logik wird jetzt von der Eltern-Komponente gesteuert
 
   useEffect(() => {
     // Update current interval when prop changes
@@ -562,8 +455,30 @@ export default function ChartView({
     // Chart als initialisiert markieren
     isInitializedRef.current = true;
 
-    // Historische Daten laden
-    loadHistoricalData();
+    // Die Daten werden jetzt als Prop übergeben, kein eigener Ladevorgang mehr
+    if (historicalData && seriesRef.current) {
+        const formattedCandles = historicalData.map(candle => ({
+            time: Math.floor(new Date(candle.ts).getTime() / 1000),
+            open: Number(candle.open),
+            high: Number(candle.high),
+            low: Number(candle.low),
+            close: Number(candle.close),
+            volume: Number(candle.volume || 0),
+        })).sort((a, b) => a.time - b.time);
+
+        seriesRef.current.setData(formattedCandles);
+        setCandleData(formattedCandles);
+        setCandleCount(formattedCandles.length);
+
+        if (volumeSeriesRef.current) {
+            const volumeData = formattedCandles.map(candle => ({
+                time: candle.time,
+                value: candle.volume,
+                color: candle.close >= candle.open ? '#26a69a' : '#ef5350',
+            }));
+            volumeSeriesRef.current.setData(volumeData);
+        }
+    }
 
     // ResizeObserver für responsive Verhalten - ABER KONTROLLIERT
     if (window.ResizeObserver) {
@@ -688,7 +603,7 @@ export default function ChartView({
   return (
     <div className="relative flex flex-col justify-center items-center w-full h-full bg-white dark:bg-gray-800 transition-colors">
       {/* Loading Overlay */}
-      {isLoading && (
+      {isLoadingProp && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-90 flex items-center justify-center z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -730,7 +645,7 @@ export default function ChartView({
         </div>
 
         {/* Data Info */}
-        {!isLoading && (
+        {!isLoadingProp && (
           <>
             <div className="text-gray-400">|</div>
             <div className="text-gray-700 dark:text-gray-300">
@@ -758,7 +673,7 @@ export default function ChartView({
       </div>
 
       {/* Error State */}
-      {wsStatus === "error" && !isLoading && (
+      {wsStatus === "error" && !isLoadingProp && (
         <div className="absolute bottom-2 left-2 bg-red-600 bg-opacity-90 px-3 py-1 rounded text-white text-xs">
           WebSocket connection failed
         </div>
