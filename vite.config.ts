@@ -7,10 +7,11 @@ export default defineConfig({
     host: "::",
     port: 8080,
     proxy: {
-      '/api':       'http://localhost:8100',
-      '/ohlc':      'http://localhost:8100',
-      '/orderbook': 'http://localhost:8100',
-      '/symbols':   'http://localhost:8100'
+      '/api': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, '')
+      }
     }
   },
   plugins: [react()],

@@ -31,17 +31,26 @@ const PriceDisplay = ({
   marketData,
   tradingMode = "Spot",
 }: PriceDisplayProps) => {
-  // Fallback zu Dummy-Daten wenn keine MarketData übergeben werden
-  const defaultMarketData: MarketData = {
-    change24h: currentCoinData.change,
-    high24h: "108,957.20",
-    low24h: "103,399.96",
-    volume24h: "6.08K",
-    turnover24h: "645.65M",
-    category: "Public Chain",
-  };
+  // Guard Clause: Wenn keine Daten vorhanden sind, zeige Platzhalter an.
+  if (!currentCoinData || !marketData) {
+    return (
+      <div className="flex items-start gap-8 mb-1">
+        <div className="flex flex-col items-start min-w-[170px]">
+          <span className="text-[1.65rem] font-bold leading-tight tracking-wider">--.--</span>
+          <span className="text-sm text-[#444] dark:text-gray-400 tracking-wider mt-0">{tradingMode}</span>
+        </div>
+        <div className="flex items-center gap-x-6 text-[0.8rem] mt-2 font-sans whitespace-nowrap dark:text-gray-300">
+          <span>Δ 24h: <b>--%</b></span>
+          <span>24h Hoch: <b>--</b></span>
+          <span>24h Tief: <b>--</b></span>
+          <span>24h Vol: <b>--</b></span>
+          <span>24h Umsatz: <b>--</b></span>
+        </div>
+      </div>
+    );
+  }
 
-  const data = marketData || defaultMarketData;
+  const data = marketData;
 
   // State für Preisvergleich
   const [previousPrice, setPreviousPrice] = useState<string>(
