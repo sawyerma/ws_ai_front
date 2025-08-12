@@ -182,6 +182,31 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
   }
 }
 
+export async function getSettings(exchange?: Exchange, symbol?: string, market?: string): Promise<CoinSetting[]> {
+  try {
+    const params = new URLSearchParams();
+    if (exchange) params.append('exchange', exchange);
+    if (symbol) params.append('symbol', symbol);
+    if (market) params.append('market', market);
+    
+    const response = await apiClient.get(`/api/config/settings`, { params });
+    return response.data;
+  } catch (error) {
+    console.error('[SymbolsAPI] Failed to fetch settings:', error);
+    return [];
+  }
+}
+
+export async function saveSettings(settings: Partial<CoinSetting>): Promise<boolean> {
+  try {
+    await apiClient.post(`/api/config/settings`, settings);
+    return true;
+  } catch (error) {
+    console.error('[SymbolsAPI] Failed to save settings:', error);
+    return false;
+  }
+}
+
 export async function getTicker(exchange: Exchange = DEFAULT_EXCHANGE, symbol: string, market?: string): Promise<any> {
   try {
     const response = await apiClient.get(`/api/market/ticker`, { 
