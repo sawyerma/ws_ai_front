@@ -12,7 +12,7 @@ export default function ChartView({
   symbol = "BTCUSDT",
   market = "spot",
   exchange = "bitget",
-  const [isLoading, setIsLoading] = useState(true);  interval = "1m",
+  interval = "1m",
   historicalData, // NEU: Daten von oben
   isLoading: isLoadingProp, // NEU: Ladezustand von oben
 }) {
@@ -24,7 +24,6 @@ export default function ChartView({
   const resizeObserverRef = useRef(null);
   const isInitializedRef = useRef(false);
   
-  // const [isLoading, setIsLoading] = useState(true); // Wird jetzt als Prop übergeben
   // Performance: Debounced states
   const [wsStatus, setWsStatus] = useState("disconnected");
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -369,7 +368,6 @@ export default function ChartView({
     // UMD: LightweightCharts von window holen!
     if (!window.LightweightCharts) {
       console.error("[ChartView] LightweightCharts not found! Make sure the UMD script is loaded.");
-      setIsLoading(false);
       return;
     }
 
@@ -517,7 +515,7 @@ export default function ChartView({
     wsRef.current = ws;
 
     ws.onopen = () => {
-      console.log("[ChartView] WebSocket verbunden:", wsEndpoint);
+      console.log("[ChartView] WebSocket verbunden:", wsUrl);
       setWsStatus("connected");
     };
 
