@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useMemo } from "react";
-import { apiClient } from "../../api/symbols"; // Import the apiClient
+import React, { useEffect, useState, useMemo, useRef } from "react";
+import { apiClient } from "../../api/symbols";
 import OptimizedOrderbook from "./optimized-orderbook";
 import OptimizedTradesList from "./optimized-trades-list";
 import { useDebouncedCallback } from "../../hooks/use-debounce";
@@ -42,32 +42,23 @@ const Orderbook = ({
   const [liveTrades, setLiveTrades] = useState<Trade[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const tradeBatchRef = useRef<Trade[]>([]);
+  const throttleCountRef = useRef(0);
+  const BATCH_SIZE = 5;
 
-  // Debounced tab change handler
   const debouncedTabChange = useDebouncedCallback((tab: "orderbook" | "trades") => {
-    console.log("Tab change requested:", tab);
     setActiveTab(tab);
-    if (onTabChange) {
-      onTabChange(tab);
-    }
+    if (onTabChange) onTabChange(tab);
   }, 100);
 
-  // Parse symbol for API calls
   const getSymbolAndMarket = () => {
-    // Handle both "BTC/USDT" and "BTCUSDT" formats
-    let symbol: string;
     if (selectedCoin.includes("/")) {
       const [base, quote] = selectedCoin.split("/");
-      symbol = `${base}${quote}`; // "BTC/USDT" → "BTCUSDT"
-    } else {
-      symbol = selectedCoin; // Already in "BTCUSDT" format
+      return { symbol: `${base}${quote}`, market: "spot" };
     }
-    
-    const market = "spot"; // Default to spot, could be dynamic
-    return { symbol, market };
+    return { symbol: selectedCoin, market: "spot" };
   };
 
-  // Memoized processed orders with totals
   const processedOrders = useMemo(() => {
     const ordersToProcess = liveOrders.length > 0 ? liveOrders : orders;
     return ordersToProcess.map(order => ({
@@ -76,124 +67,159 @@ const Orderbook = ({
     }));
   }, [liveOrders, orders]);
 
-  // Fetch orderbook data
-  const fetchOrderbook = async () => {
-    const { symbol } = getSymbolAndMarket();
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      // Use the central apiClient
-      const response = await apiClient.get(`/api/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
-      if (response.status !== 200) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = response.data;
-      
-      // Transform API data to component format
-      const asks: OrderbookEntry[] = data.asks.map((ask: any) => ({
-        price: ask.price,
-        size: ask.size,
-        total: ask.price * ask.size,
-        side: "sell" as const
-      }));
-      
-      const bids: OrderbookEntry[] = data.bids.map((bid: any) => ({
-        price: bid.price,
-        size: bid.size,
-        total: bid.price * bid.size,
-        side: "buy" as const
-      }));
-      
-      setLiveOrders([...asks, ...bids]);
-    } catch (err) {
-      console.error("Failed to fetch orderbook:", err);
-      setError(err instanceof Error ? err.message : "Failed to load orderbook");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // WebSocket connection for live trades
+  // Safe Fetch for Orderbook Data
   useEffect(() => {
-    const { symbol, market } = getSymbolAndMarket();
-    
-    // Connect to trades WebSocket
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/${symbol}/${market}/trades`;
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log(`[Orderbook] Connected to trades WebSocket: ${symbol}/${market}`);
-    };
-    
-    ws.onmessage = (event) => {
+    let isActive = true;
+    const { symbol } = getSymbolAndMarket();
+
+    const fetchOrderbook = async () => {
+      if (!isActive) return;
+      setIsLoading(true);
+      setError(null);
+      
       try {
-        const msg = JSON.parse(event.data);
+        const response = await apiClient.get(`/api/orderbook`, { 
+          params: { symbol, market_type: 'spot', limit: 15 } 
+        });
         
-        if (msg.type === "trade") {
-          const newTrade: Trade = {
-            id: `${msg.ts}-${Math.random()}`,
-            price: parseFloat(msg.price),
-            size: parseFloat(msg.size),
-            side: msg.side,
-            time: new Date(msg.ts).toLocaleTimeString(),
-            ts: msg.ts
-          };
+        if (isActive) {
+          const data = response.data;
+          const asks: OrderbookEntry[] = data.asks.map((ask: any) => ({ 
+            price: parseFloat(ask[0]), 
+            size: parseFloat(ask[1]), 
+            side: "sell" as const 
+          }));
           
-          setLiveTrades(prev => {
-            const updated = [newTrade, ...prev];
-            return updated.slice(0, 100); // Keep last 100 trades for performance
-          });
+          const bids: OrderbookEntry[] = data.bids.map((bid: any) => ({ 
+            price: parseFloat(bid[0]), 
+            size: parseFloat(bid[1]), 
+            side: "buy" as const 
+          }));
+          
+          setLiveOrders([...bids, ...asks]);
         }
       } catch (err) {
-        console.error("Error parsing trade message:", err);
+        if (isActive) {
+          console.error("Failed to fetch orderbook:", err);
+          setError(err instanceof Error ? err.message : "Failed to load orderbook");
+        }
+      } finally {
+        if (isActive) setIsLoading(false);
       }
     };
-    
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-    
-    ws.onclose = () => {
-      console.log(`[Orderbook] Disconnected from trades WebSocket: ${symbol}/${market}`);
-    };
-    
-    return () => {
-      ws.close();
-    };
+
+    fetchOrderbook();
+
+    return () => { isActive = false; };
   }, [selectedCoin]);
 
-  // Initial orderbook fetch only - no polling, pure WebSocket updates
+  // WebSocket connection with reconnect and throttling
   useEffect(() => {
-    fetchOrderbook(); // Single initial fetch only
+    let isMounted = true;
+    let ws: WebSocket | null = null;
+    let reconnectTimeout: NodeJS.Timeout;
+
+    const connectWebSocket = () => {
+      if (!isMounted) return;
+      
+      const { symbol, market } = getSymbolAndMarket();
+      const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const wsUrl = `${wsProtocol}//${window.location.host}/ws/${symbol}/${market}/trades`;
+      
+      ws = new WebSocket(wsUrl);
+      tradeBatchRef.current = [];
+      throttleCountRef.current = 0;
+
+      ws.onopen = () => {
+        if (isMounted) {
+          console.log(`[Orderbook] Connected to trades WebSocket: ${symbol}/${market}`);
+          setError(null);
+        }
+      };
+      
+      ws.onmessage = (event) => {
+        if (!isMounted) return;
+        try {
+          const msg = JSON.parse(event.data);
+          if (msg.type === "trade") {
+            const newTrade: Trade = {
+              id: `${msg.ts}-${Math.random().toString(36).substr(2, 9)}`,
+              price: parseFloat(msg.price),
+              size: parseFloat(msg.size),
+              side: msg.side,
+              time: new Date(msg.ts).toLocaleTimeString(),
+              ts: msg.ts
+            };
+            
+            // Throttling: Only update every BATCH_SIZE trades
+            tradeBatchRef.current.push(newTrade);
+            throttleCountRef.current++;
+            
+            if (throttleCountRef.current >= BATCH_SIZE) {
+              setLiveTrades(prev => {
+                const updated = [...tradeBatchRef.current, ...prev];
+                return updated.slice(0, 100);
+              });
+              tradeBatchRef.current = [];
+              throttleCountRef.current = 0;
+            }
+          }
+        } catch (err) {
+          console.error("Error parsing trade message:", err);
+        }
+      };
+      
+      ws.onerror = (error) => {
+        if (isMounted) {
+          setError("Live-Datenverbindung unterbrochen");
+          console.error("WebSocket error:", error);
+        }
+      };
+      
+      ws.onclose = () => {
+        if (!isMounted) return;
+        console.log(`[Orderbook] WebSocket closed, reconnecting...`);
+        reconnectTimeout = setTimeout(connectWebSocket, 3000);
+      };
+    };
+
+    connectWebSocket();
+
+    return () => {
+      isMounted = false;
+      clearTimeout(reconnectTimeout);
+      if (ws) {
+        ws.onclose = null; // Disable reconnect on cleanup
+        ws.close();
+      }
+    };
   }, [selectedCoin]);
 
-  // Use live data if available, fallback to props
+  // Process remaining trades on unmount or symbol change
+  useEffect(() => {
+    return () => {
+      if (tradeBatchRef.current.length > 0) {
+        setLiveTrades(prev => [...tradeBatchRef.current, ...prev].slice(0, 100));
+      }
+    };
+  }, [selectedCoin]);
+
   const tradesToShow = liveTrades.length > 0 ? liveTrades : trades;
 
   return (
     <div
       className="bg-white dark:bg-gray-800 rounded-xl shadow h-full flex flex-col"
-      style={{
-        fontFamily: "'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'",
-      }}
+      style={{ fontFamily: "'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'" }}
     >
-      {/* Header with Tabs */}
       <div className="border-b border-gray-200 dark:border-gray-600 px-4 pt-4">
         <div className="flex items-center justify-between mb-3">
           <div className="flex relative">
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                debouncedTabChange("trades");
-              }}
+              onClick={() => debouncedTabChange("trades")}
               className={`px-4 py-2 text-sm font-medium transition-colors relative cursor-pointer ${
-                activeTab === "trades"
-                  ? "text-black dark:text-white"
+                activeTab === "trades" 
+                  ? "text-black dark:text-white" 
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
@@ -204,14 +230,10 @@ const Orderbook = ({
             </button>
             <button
               type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                debouncedTabChange("orderbook");
-              }}
+              onClick={() => debouncedTabChange("orderbook")}
               className={`px-4 py-2 text-sm font-medium transition-colors ml-6 relative cursor-pointer ${
-                activeTab === "orderbook"
-                  ? "text-black dark:text-white"
+                activeTab === "orderbook" 
+                  ? "text-black dark:text-white" 
                   : "text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               }`}
             >
@@ -221,8 +243,6 @@ const Orderbook = ({
               )}
             </button>
           </div>
-          
-          {/* Status Indicator */}
           <div className="flex items-center gap-2">
             {isLoading && (
               <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse"></div>
@@ -238,8 +258,7 @@ const Orderbook = ({
             </span>
           </div>
         </div>
-
-        {/* Column Headers */}
+        
         {activeTab === "orderbook" && (
           <div className="grid grid-cols-3 text-xs text-gray-500 dark:text-gray-400 pb-2">
             <div className="text-left">
@@ -251,7 +270,7 @@ const Orderbook = ({
             <div className="text-right">Umsatz</div>
           </div>
         )}
-
+        
         {activeTab === "trades" && (
           <div className="grid grid-cols-3 text-xs text-gray-500 dark:text-gray-400 pb-2">
             <div className="text-left">
@@ -264,37 +283,28 @@ const Orderbook = ({
           </div>
         )}
       </div>
-
-      {/* Content */}
+      
       <div className="flex-1 overflow-hidden">
         {activeTab === "orderbook" ? (
           <div className="h-full">
-            {/* Error State */}
             {error && (
               <div className="p-4 text-center text-red-600 dark:text-red-400 text-sm">
                 {error}
               </div>
             )}
-            
             <OptimizedOrderbook
               orders={processedOrders}
               currentPrice={currentPrice}
-              onOrderClick={(order) => {
-                console.log("Order clicked:", order);
-              }}
+              onOrderClick={(order) => console.log("Order clicked:", order)}
             />
           </div>
         ) : (
-          /* Trades Tab */
           <div className="h-full">
             <OptimizedTradesList
               trades={tradesToShow}
-              onTradeClick={(trade) => {
-                console.log("Trade clicked:", trade);
-              }}
+              onTradeClick={(trade) => console.log("Trade clicked:", trade)}
             />
             
-            {/* Empty State */}
             {tradesToShow.length === 0 && !isLoading && (
               <div className="text-gray-400 p-4 text-center">
                 {error ? "Failed to load trades" : "No trades yet."}

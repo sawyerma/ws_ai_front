@@ -12,7 +12,7 @@ export default function ChartView({
   symbol = "BTCUSDT",
   market = "spot",
   exchange = "bitget",
-  interval = "1m",
+  const [isLoading, setIsLoading] = useState(true);  interval = "1m",
   historicalData, // NEU: Daten von oben
   isLoading: isLoadingProp, // NEU: Ladezustand von oben
 }) {

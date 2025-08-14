@@ -33,9 +33,16 @@ interface BackendTicker {
   market_type: string;
 }
 
+interface DbSymbol {
+  id: string;
+  symbol: string;
+  market: string;
+  exchange: string;
+}
+
 interface BackendSymbolsResponse {
   symbols: BackendSymbol[];
-  db_symbols: any[];
+  db_symbols: DbSymbol[];
 }
 
 export interface CoinSetting {
@@ -55,7 +62,7 @@ export const DEFAULT_EXCHANGE: Exchange = 'bitget';
 
 // --- CONFIGURATION ---
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+const API_BASE = ''; // Korrektur: Leer lassen für korrekte Proxy-Nutzung
 export const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
@@ -82,15 +89,23 @@ function formatSymbol(symbol: string): string {
 }
 
 function formatMarketType(marketType: string): string {
-  const marketMap: { [key: string]: string } = {
-    'spot': 'spot', 'usdtm': 'USDT-M', 'coinm': 'COIN-M', 'usdcm': 'USDC-M',
-    'USDT-FUTURES': 'USDT-M', 'COIN-FUTURES': 'COIN-M', 'USDC-FUTURES': 'USDC-M',
+  const marketMap: Record<string, string> = {
+    'spot': 'spot', 
+    'usdtm': 'USDT-M', 
+    'coinm': 'COIN-M', 
+    'usdcm': 'USDC-M',
+    'USDT-FUTURES': 'USDT-M', 
+    'COIN-FUTURES': 'COIN-M', 
+    'USDC-FUTURES': 'USDC-M',
+    'linear': 'USDT-M',  // Neue Mapping-Ergänzung
+    'inverse': 'COIN-M'  // Neue Mapping-Ergänzung
   };
-  return marketMap[marketType] || marketType;
+  return marketMap[marketType.toLowerCase()] || marketType;
 }
 
 function formatPrice(price: number): string {
   if (price === 0) return '0.00';
+  if (price < 0.0001) return price.toFixed(8);
   if (price < 1) return price.toFixed(6);
   if (price < 100) return price.toFixed(4);
   if (price < 1000) return price.toFixed(2);
@@ -109,7 +124,13 @@ function formatChangePercent(changeRate: number): { change: string; changePercen
 function parseTimeframe(tf: string): number {
   const unit = tf.slice(-1);
   const value = parseInt(tf.slice(0, -1), 10);
-  if (isNaN(value)) return 3600000;
+  const validUnits = ['m', 'h', 'd'];
+  
+  if (isNaN(value) || !validUnits.includes(unit)) {
+    console.warn(`Invalid timeframe: ${tf}, using default 1h`);
+    return 3600000; // 1 Stunde als Standard
+  }
+  
   switch(unit) {
     case 'm': return value * 60 * 1000;
     case 'h': return value * 60 * 60 * 1000;
@@ -122,7 +143,9 @@ function parseTimeframe(tf: string): number {
 
 async function fetchRawSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendSymbolsResponse> {
   try {
-    const response = await apiClient.get(`/api/market/symbols?exchange=${exchange}`);
+    const response = await apiClient.get(`/api/market/symbols`, { 
+      params: { exchange } 
+    });
     return response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch symbols from ${exchange}:`, error);
@@ -132,9 +155,10 @@ async function fetchRawSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<B
 
 async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendTicker[]> {
   try {
-    const response = await apiClient.get(`/api/market/ticker?exchange=${exchange}`);
-    const tickers = response.data.tickers || response.data;
-    return tickers;
+    const response = await apiClient.get(`/api/market/ticker`, { 
+      params: { exchange } 
+    });
+    return response.data.tickers || response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch tickers from ${exchange}:`, error);
     throw error;
@@ -143,10 +167,9 @@ async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<B
 
 export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<ApiResponse> {
   try {
-    const [symbolsData, tickersData] = await Promise.all([
-      fetchRawSymbols(exchange),
-      fetchRawTickers(exchange),
-    ]);
+    // Reihenfolge fix: Zuerst Tickers, dann Symbols (vermeidet Race Condition)
+    const tickersData = await fetchRawTickers(exchange);
+    const symbolsData = await fetchRawSymbols(exchange);
     
     const tickerMap = new Map<string, BackendTicker>();
     tickersData.forEach(ticker => {
@@ -156,13 +179,17 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
     
     const symbols: ApiSymbol[] = symbolsData.symbols.map(symbol => {
       const tickerKey = `${symbol.symbol}_${symbol.market_type}`;
-      const ticker = tickerMap.get(tickerKey);
-      const { change, changePercent } = ticker ? formatChangePercent(ticker.changeRate) : { change: '0.00%', changePercent: 0 };
+      const ticker = tickerMap.get(tickerKey) ?? {
+        last: 0,
+        changeRate: 0
+      };
+      
+      const { change, changePercent } = formatChangePercent(ticker.changeRate);
       
       return {
         symbol: formatSymbol(symbol.symbol),
         market: formatMarketType(symbol.market_type),
-        price: ticker ? formatPrice(ticker.last) : '0.00',
+        price: formatPrice(ticker.last),
         change,
         changePercent,
       };
@@ -178,19 +205,19 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
     };
   } catch (error) {
     console.error('[SymbolsAPI] Error in getSymbols:', error);
-    return { symbols: [] };
+    throw error; // Fehler weiterwerfen statt leeres Array
   }
 }
 
 export async function getSettings(exchange?: Exchange, symbol?: string, market?: string): Promise<CoinSetting[]> {
   try {
     const response = await apiClient.get(`/api/config/settings`, { 
-        params: { exchange, symbol, market } 
+      params: { exchange, symbol, market } 
     });
     return response.data;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to fetch settings:', error);
-    return [];
+    throw error;
   }
 }
 
@@ -200,7 +227,7 @@ export async function saveSettings(settings: Partial<CoinSetting>): Promise<bool
     return true;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to save settings:', error);
-    return false;
+    throw error;
   }
 }
 
@@ -221,7 +248,12 @@ export const fetchTrades = async (symbol: string, timeframe = '1h') => {
   const from = new Date(now.getTime() - parseTimeframe(timeframe));
   try {
     const response = await apiClient.get('/api/trades', {
-      params: { symbol, from_time: from.toISOString(), to_time: now.toISOString(), limit: 1000 }
+      params: { 
+        symbol, 
+        from_time: from.toISOString(), 
+        to_time: now.toISOString(), 
+        limit: 1000 
+      }
     });
     return response.data;
   } catch (error) {
@@ -241,13 +273,13 @@ export const saveUserConfig = async (config: Partial<CoinSetting>) => {
 };
 
 export const getLatestUserConfig = async () => {
-    try {
-        const response = await apiClient.get('/api/config/latest');
-        return response.data;
-    } catch (error) {
-        console.error('Failed to get latest config:', error);
-        throw error;
-    }
+  try {
+    const response = await apiClient.get('/api/config/latest');
+    return response.data;
+  } catch (error) {
+    console.error('Failed to get latest config:', error);
+    throw error;
+  }
 };
 
 export function clearCache(): void {
