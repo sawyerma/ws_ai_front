@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { apiClient } from "../../api/symbols"; // Import the apiClient
 import OptimizedOrderbook from "./optimized-orderbook";
 import OptimizedTradesList from "./optimized-trades-list";
 import { useDebouncedCallback } from "../../hooks/use-debounce";
@@ -82,12 +83,13 @@ const Orderbook = ({
     setError(null);
     
     try {
-      const response = await fetch(`/api/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
-      if (!response.ok) {
+      // Use the central apiClient
+      const response = await apiClient.get(`/api/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
+      if (response.status !== 200) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      const data = response.data;
       
       // Transform API data to component format
       const asks: OrderbookEntry[] = data.asks.map((ask: any) => ({
@@ -118,10 +120,8 @@ const Orderbook = ({
     const { symbol, market } = getSymbolAndMarket();
     
     // Connect to trades WebSocket
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host;
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || `${wsProtocol}//${wsHost}`;
-    const wsUrl = `${wsBaseUrl}/ws/${symbol}/${market}/trades`;
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/${symbol}/${market}/trades`;
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {

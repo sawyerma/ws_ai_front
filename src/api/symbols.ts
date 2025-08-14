@@ -55,9 +55,8 @@ export const DEFAULT_EXCHANGE: Exchange = 'bitget';
 
 // --- CONFIGURATION ---
 
-// Direkte Verbindung zum Backend für die Entwicklung
-const API_BASE = 'http://localhost:8100'; 
-const apiClient = axios.create({
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+export const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
 });
@@ -185,12 +184,9 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
 
 export async function getSettings(exchange?: Exchange, symbol?: string, market?: string): Promise<CoinSetting[]> {
   try {
-    const params = new URLSearchParams();
-    if (exchange) params.append('exchange', exchange);
-    if (symbol) params.append('symbol', symbol);
-    if (market) params.append('market', market);
-    
-    const response = await apiClient.get(`/api/config/settings`, { params });
+    const response = await apiClient.get(`/api/config/settings`, { 
+        params: { exchange, symbol, market } 
+    });
     return response.data;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to fetch settings:', error);
@@ -255,7 +251,5 @@ export const getLatestUserConfig = async () => {
 };
 
 export function clearCache(): void {
-  // This is a placeholder as we removed the manual cache.
-  // React Query handles caching now.
   console.log('[SymbolsAPI] Cache management is now handled by React Query.');
 }

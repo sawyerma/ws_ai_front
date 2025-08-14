@@ -24,7 +24,7 @@ export default function ChartView({
   const resizeObserverRef = useRef(null);
   const isInitializedRef = useRef(false);
   
-  const [isLoading, setIsLoading] = useState(true);
+  // const [isLoading, setIsLoading] = useState(true); // Wird jetzt als Prop übergeben
   // Performance: Debounced states
   const [wsStatus, setWsStatus] = useState("disconnected");
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -363,7 +363,6 @@ export default function ChartView({
       wsRef.current = null;
     }
 
-    // setIsLoading(true); // This is now controlled by the parent prop
     setWsStatus("disconnected");
     setCandleCount(0);
 
@@ -511,11 +510,10 @@ export default function ChartView({
 
     // WebSocket verbinden - PASSEND ZU DEINEM BACKEND
     setWsStatus("connecting");
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.host; // Use the same host as the frontend
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || `${wsProtocol}//${wsHost}`;
-    const wsEndpoint = wsUrl || `${wsBaseUrl}/ws/${exchange}/${symbol}/${market}`;
-    const ws = new window.WebSocket(wsEndpoint);
+    // Korrigierte WebSocket URL, die den Nginx Proxy nutzt
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/${exchange}/${symbol}/${market}`;
+    const ws = new window.WebSocket(wsUrl);
     wsRef.current = ws;
 
     ws.onopen = () => {
@@ -606,7 +604,7 @@ export default function ChartView({
   return (
     <div className="relative flex flex-col justify-center items-center w-full h-full bg-white dark:bg-gray-800 transition-colors">
       {/* Loading Overlay */}
-      {(isLoading || isLoadingProp) && (
+      {isLoadingProp && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-90 flex items-center justify-center z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -648,7 +646,7 @@ export default function ChartView({
         </div>
 
         {/* Data Info */}
-        {!(isLoading || isLoadingProp) && (
+        {!isLoadingProp && (
           <>
             <div className="text-gray-400">|</div>
             <div className="text-gray-700 dark:text-gray-300">
@@ -676,7 +674,7 @@ export default function ChartView({
       </div>
 
       {/* Error State */}
-      {wsStatus === "error" && !(isLoading || isLoadingProp) && (
+      {wsStatus === "error" && !isLoadingProp && (
         <div className="absolute bottom-2 left-2 bg-red-600 bg-opacity-90 px-3 py-1 rounded text-white text-xs">
           WebSocket connection failed
         </div>
