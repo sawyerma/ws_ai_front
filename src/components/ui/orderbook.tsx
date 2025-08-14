@@ -82,7 +82,7 @@ const Orderbook = ({
           params: { symbol, market_type: 'spot', limit: 15 } 
         });
         
-        if (isActive) {
+        if (isActive && response.data) {
           const data = response.data;
           const asks: OrderbookEntry[] = data.asks.map((ask: any) => ({ 
             price: parseFloat(ask[0]), 
@@ -143,7 +143,7 @@ const Orderbook = ({
           const msg = JSON.parse(event.data);
           if (msg.type === "trade") {
             const newTrade: Trade = {
-              id: `${msg.ts}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `${msg.ts}-${Math.random().toString(36).substring(2, 10)}`,
               price: parseFloat(msg.price),
               size: parseFloat(msg.size),
               side: msg.side,
@@ -151,7 +151,6 @@ const Orderbook = ({
               ts: msg.ts
             };
             
-            // Throttling: Only update every BATCH_SIZE trades
             tradeBatchRef.current.push(newTrade);
             throttleCountRef.current++;
             

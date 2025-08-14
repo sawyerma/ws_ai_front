@@ -62,7 +62,7 @@ export const DEFAULT_EXCHANGE: Exchange = 'bitget';
 
 // --- CONFIGURATION ---
 
-const API_BASE = ''; // Korrektur: Leer lassen für korrekte Proxy-Nutzung
+const API_BASE = ''; // Korrekt für Proxy
 export const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
@@ -97,8 +97,8 @@ function formatMarketType(marketType: string): string {
     'USDT-FUTURES': 'USDT-M', 
     'COIN-FUTURES': 'COIN-M', 
     'USDC-FUTURES': 'USDC-M',
-    'linear': 'USDT-M',  // Neue Mapping-Ergänzung
-    'inverse': 'COIN-M'  // Neue Mapping-Ergänzung
+    'linear': 'USDT-M',
+    'inverse': 'COIN-M'
   };
   return marketMap[marketType.toLowerCase()] || marketType;
 }
@@ -128,7 +128,7 @@ function parseTimeframe(tf: string): number {
   
   if (isNaN(value) || !validUnits.includes(unit)) {
     console.warn(`Invalid timeframe: ${tf}, using default 1h`);
-    return 3600000; // 1 Stunde als Standard
+    return 3600000;
   }
   
   switch(unit) {
@@ -158,7 +158,7 @@ async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<B
     const response = await apiClient.get(`/api/market/ticker`, { 
       params: { exchange } 
     });
-    return response.data.tickers || response.data;
+    return response.data.tickers || [];
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch tickers from ${exchange}:`, error);
     throw error;
@@ -167,9 +167,10 @@ async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<B
 
 export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<ApiResponse> {
   try {
-    // Reihenfolge fix: Zuerst Tickers, dann Symbols (vermeidet Race Condition)
-    const tickersData = await fetchRawTickers(exchange);
-    const symbolsData = await fetchRawSymbols(exchange);
+    const [symbolsData, tickersData] = await Promise.all([
+      fetchRawSymbols(exchange),
+      fetchRawTickers(exchange)
+    ]);
     
     const tickerMap = new Map<string, BackendTicker>();
     tickersData.forEach(ticker => {
@@ -182,7 +183,7 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
       const ticker = tickerMap.get(tickerKey) ?? {
         last: 0,
         changeRate: 0
-      };
+      } as BackendTicker;
       
       const { change, changePercent } = formatChangePercent(ticker.changeRate);
       
@@ -197,15 +198,13 @@ export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise
     
     return {
       symbols: symbols.sort((a, b) => {
-        if (a.market !== b.market) {
-          return a.market === 'spot' ? -1 : 1;
-        }
+        if (a.market !== b.market) return a.market === 'spot' ? -1 : 1;
         return a.symbol.localeCompare(b.symbol);
       }),
     };
   } catch (error) {
     console.error('[SymbolsAPI] Error in getSymbols:', error);
-    throw error; // Fehler weiterwerfen statt leeres Array
+    return { symbols: [] };
   }
 }
 
@@ -217,7 +216,7 @@ export async function getSettings(exchange?: Exchange, symbol?: string, market?:
     return response.data;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to fetch settings:', error);
-    throw error;
+    return [];
   }
 }
 
@@ -227,7 +226,7 @@ export async function saveSettings(settings: Partial<CoinSetting>): Promise<bool
     return true;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to save settings:', error);
-    throw error;
+    return false;
   }
 }
 
@@ -239,7 +238,7 @@ export async function getTicker(exchange: Exchange = DEFAULT_EXCHANGE, symbol: s
     return response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch ticker for ${symbol}:`, error);
-    throw error;
+    return null;
   }
 }
 
@@ -258,7 +257,7 @@ export const fetchTrades = async (symbol: string, timeframe = '1h') => {
     return response.data;
   } catch (error) {
     console.error(`Failed to fetch trades for ${symbol}:`, error);
-    throw error;
+    return [];
   }
 };
 
@@ -268,7 +267,7 @@ export const saveUserConfig = async (config: Partial<CoinSetting>) => {
     return response.data;
   } catch (error) {
     console.error('Failed to save config:', error);
-    throw error;
+    return null;
   }
 };
 
@@ -278,7 +277,7 @@ export const getLatestUserConfig = async () => {
     return response.data;
   } catch (error) {
     console.error('Failed to get latest config:', error);
-    throw error;
+    return null;
   }
 };
 
