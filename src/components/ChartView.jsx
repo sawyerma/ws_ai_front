@@ -24,6 +24,7 @@ export default function ChartView({
   const resizeObserverRef = useRef(null);
   const isInitializedRef = useRef(false);
   
+  const [isLoading, setIsLoading] = useState(true);
   // Performance: Debounced states
   const [wsStatus, setWsStatus] = useState("disconnected");
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -362,7 +363,7 @@ export default function ChartView({
       wsRef.current = null;
     }
 
-    setIsLoading(true);
+    // setIsLoading(true); // This is now controlled by the parent prop
     setWsStatus("disconnected");
     setCandleCount(0);
 
@@ -603,7 +604,7 @@ export default function ChartView({
   return (
     <div className="relative flex flex-col justify-center items-center w-full h-full bg-white dark:bg-gray-800 transition-colors">
       {/* Loading Overlay */}
-      {isLoadingProp && (
+      {(isLoading || isLoadingProp) && (
         <div className="absolute inset-0 bg-white dark:bg-gray-800 bg-opacity-90 flex items-center justify-center z-10">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -645,7 +646,7 @@ export default function ChartView({
         </div>
 
         {/* Data Info */}
-        {!isLoadingProp && (
+        {!(isLoading || isLoadingProp) && (
           <>
             <div className="text-gray-400">|</div>
             <div className="text-gray-700 dark:text-gray-300">
@@ -673,7 +674,7 @@ export default function ChartView({
       </div>
 
       {/* Error State */}
-      {wsStatus === "error" && !isLoadingProp && (
+      {wsStatus === "error" && !(isLoading || isLoadingProp) && (
         <div className="absolute bottom-2 left-2 bg-red-600 bg-opacity-90 px-3 py-1 rounded text-white text-xs">
           WebSocket connection failed
         </div>

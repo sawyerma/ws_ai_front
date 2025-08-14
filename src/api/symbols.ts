@@ -55,7 +55,8 @@ export const DEFAULT_EXCHANGE: Exchange = 'bitget';
 
 // --- CONFIGURATION ---
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+// API_BASE wird relativ, damit Anfragen an den eigenen Host (und damit den Proxy) gehen.
+const API_BASE = '/api'; 
 const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,
