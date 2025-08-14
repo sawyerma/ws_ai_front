@@ -55,8 +55,8 @@ export const DEFAULT_EXCHANGE: Exchange = 'bitget';
 
 // --- CONFIGURATION ---
 
-// API_BASE wird relativ, damit Anfragen an den eigenen Host (und damit den Proxy) gehen.
-const API_BASE = '/api'; 
+// Direkte Verbindung zum Backend für die Entwicklung
+const API_BASE = 'http://localhost:8100'; 
 const apiClient = axios.create({
   baseURL: API_BASE,
   timeout: 10000,

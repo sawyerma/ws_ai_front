@@ -511,7 +511,9 @@ export default function ChartView({
 
     // WebSocket verbinden - PASSEND ZU DEINEM BACKEND
     setWsStatus("connecting");
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8100';
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host; // Use the same host as the frontend
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || `${wsProtocol}//${wsHost}`;
     const wsEndpoint = wsUrl || `${wsBaseUrl}/ws/${exchange}/${symbol}/${market}`;
     const ws = new window.WebSocket(wsEndpoint);
     wsRef.current = ws;

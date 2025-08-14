@@ -82,7 +82,7 @@ const Orderbook = ({
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:8100/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
+      const response = await fetch(`/api/orderbook?symbol=${symbol}&market_type=spot&limit=15`);
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
@@ -118,7 +118,9 @@ const Orderbook = ({
     const { symbol, market } = getSymbolAndMarket();
     
     // Connect to trades WebSocket
-    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || 'ws://localhost:8100';
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsHost = window.location.host;
+    const wsBaseUrl = import.meta.env.VITE_WS_BASE_URL || `${wsProtocol}//${wsHost}`;
     const wsUrl = `${wsBaseUrl}/ws/${symbol}/${market}/trades`;
     const ws = new WebSocket(wsUrl);
     
