@@ -112,14 +112,19 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
   };
 
   const handleKeyChange = (provider: string, field: string, value: string) => {
-    setApiKeys(prev => ({
-      ...prev,
-      [provider]: {
-        ...prev[provider],
-        [field]: value,
-        status: value ? "pending" : "not_configured"
-      }
-    }));
+    setApiKeys(prev => {
+      const current = prev[provider];
+      if (!current) return prev;
+      
+      return {
+        ...prev,
+        [provider]: {
+          ...current,
+          [field]: value,
+          status: value ? "pending" : "not_configured"
+        } as APIKeyConfig
+      };
+    });
   };
 
   const toggleKeyVisibility = (provider: string) => {
@@ -131,18 +136,23 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
 
   const validateAPIKey = async (provider: string) => {
     const config = apiKeys[provider];
+    if (!config) return;
     
     // Spezielle Behandlung für Bitget
     if (provider === 'bitget') {
       if (!config.key || !config.secret || !config.passphrase) {
-        setApiKeys(prev => ({
-          ...prev,
-          [provider]: {
-            ...prev[provider],
-            status: "error",
-            lastChecked: new Date().toISOString()
-          }
-        }));
+        setApiKeys(prev => {
+          const current = prev[provider];
+          if (!current) return prev;
+          return {
+            ...prev,
+            [provider]: {
+              ...current,
+              status: "error",
+              lastChecked: new Date().toISOString()
+            } as APIKeyConfig
+          };
+        });
         return;
       }
     } else {
@@ -172,25 +182,33 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
 
       const data = await response.json();
       
-      setApiKeys(prev => ({
-        ...prev,
-        [provider]: {
-          ...prev[provider],
-          status: data.valid ? "connected" : "error",
-          lastChecked: new Date().toISOString()
-        }
-      }));
+      setApiKeys(prev => {
+        const current = prev[provider];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [provider]: {
+            ...current,
+            status: data.valid ? "connected" : "error",
+            lastChecked: new Date().toISOString()
+          } as APIKeyConfig
+        };
+      });
 
     } catch (error) {
       console.error(`Validation failed for ${provider}:`, error);
-      setApiKeys(prev => ({
-        ...prev,
-        [provider]: {
-          ...prev[provider],
-          status: "error",
-          lastChecked: new Date().toISOString()
-        }
-      }));
+      setApiKeys(prev => {
+        const current = prev[provider];
+        if (!current) return prev;
+        return {
+          ...prev,
+          [provider]: {
+            ...current,
+            status: "error",
+            lastChecked: new Date().toISOString()
+          } as APIKeyConfig
+        };
+      });
     } finally {
       setLoading(prev => ({ ...prev, [provider]: false }));
     }
@@ -227,7 +245,8 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
         setSaveStatus("success");
         // Validate all non-empty keys
         Object.keys(apiKeys).forEach(provider => {
-          if (apiKeys[provider].key.trim()) {
+          const config = apiKeys[provider];
+          if (config && config.key.trim()) {
             validateAPIKey(provider);
           }
         });
