@@ -73,15 +73,17 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
 
   // Market mapping: TradingNav → API market values
   const getMarketFilter = (selectedMarket?: string): string | null => {
-    if (!selectedMarket) return null;
+    if (!selectedMarket || selectedMarket === "Market") {
+      return null; // No filter - show all coins
+    }
     
-    // Backend hat nur "spot" und "futures" - alle Futures-Typen → "futures"
+    // Map to specific Bitget market types
     const marketMap: { [key: string]: string } = {
       "Spot": "spot",
-      "USDT-M Futures": "futures",
-      "Coin-M Perpetual-Futures": "futures", 
-      "Coin-M Delivery-Futures": "futures",
-      "USDC-M Futures": "futures",
+      "USDT-M Futures": "usdtm",
+      "USDC-M Futures": "usdcm", 
+      "Coin-M Perpetual-Futures": "coinm", 
+      "Coin-M Delivery-Futures": "coinm",
     };
     
     return marketMap[selectedMarket] || null;

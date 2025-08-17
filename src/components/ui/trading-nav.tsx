@@ -11,13 +11,19 @@ interface TradingNavProps {
 }
 
 const TradingNav = ({ onTradingModeChange, onExchangeChange, onViewChange }: TradingNavProps) => {
-  const [activeTab, setActiveTab] = useState("Spot");
+  const [activeTab, setActiveTab] = useState("Market");
+  const [activeMarketLabel, setActiveMarketLabel] = useState("Market");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [selectedExchange, setSelectedExchange] = useState("Bitget");
   const [isExchangeDropdownOpen, setIsExchangeDropdownOpen] = useState(false);
 
   const marketOptions = [
+    {
+      name: "Market",
+      description: "Alle Märkte anzeigen",
+      icon: "📊",
+    },
     {
       name: "Spot",
       description: "Spot-Trading mit sofortiger Abwicklung",
@@ -111,6 +117,19 @@ const TradingNav = ({ onTradingModeChange, onExchangeChange, onViewChange }: Tra
   const handleMarketOptionClick = (option: string) => {
     setActiveTab("Market");
     setIsDropdownOpen(false);
+    
+    // Update button label based on selection
+    const labelMap: { [key: string]: string } = {
+      "Market": "Market",
+      "Spot": "Spot", 
+      "USDT-M Futures": "USDT-M",
+      "USDC-M Futures": "USDC-M", 
+      "Coin-M Perpetual-Futures": "Coin-M",
+      "Coin-M Delivery-Futures": "Coin-M"
+    };
+    
+    setActiveMarketLabel(labelMap[option] || "Market");
+    
     if (onTradingModeChange) {
       onTradingModeChange(option);
     }
@@ -130,7 +149,7 @@ const TradingNav = ({ onTradingModeChange, onExchangeChange, onViewChange }: Tra
               }`}
               onClick={() => handleTabClick(item.name)}
             >
-              {item.name}
+              {item.name === "Market" ? activeMarketLabel : item.name}
               {item.hasDropdown && " ▽"}
             </button>
 

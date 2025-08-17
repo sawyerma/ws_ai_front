@@ -46,7 +46,8 @@ const Index = () => {
   const [selectedInterval, setSelectedInterval] = useState("1m");
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
   const [selectedExchange, setSelectedExchange] = useState<Exchange>("bitget");
-  const [tradingMode, setTradingMode] = useState("Spot"); // Wiederhergestellt für Kompatibilität
+  const [tradingMode, setTradingMode] = useState("Market"); // Start with Market (alle)
+  const [selectedMarketType, setSelectedMarketType] = useState("Market"); // Präziser Markttyp
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [currentCoinData, setCurrentCoinData] = useState<CoinData | null>(null);
 
@@ -155,6 +156,11 @@ const Index = () => {
     setSelectedIndicators(prev => prev.filter(i => i !== indicator));
   };
 
+  const handleTradingModeChange = (mode: string) => {
+    setSelectedMarketType(mode);
+    setTradingMode(mode); // Für Kompatibilität
+  };
+
   const handleExchangeChange = (exchange: string) => {
     setSelectedExchange(exchange as Exchange);
   };
@@ -192,7 +198,7 @@ const Index = () => {
       >
         {/* Top Navigation */}
         <TradingNav
-          onTradingModeChange={setTradingMode}
+          onTradingModeChange={handleTradingModeChange}
           onExchangeChange={handleExchangeChange}
           onViewChange={setViewMode}
         />
@@ -229,11 +235,13 @@ const Index = () => {
 
           {/* Column 2: Price Display */}
           <div className="flex flex-col w-[83%] ml-5 max-lg:w-full max-lg:ml-0">
-            <PriceDisplay
-              currentCoinData={currentCoinData}
-              marketData={tickerData}
-              tradingMode={selectedMarket}
-            />
+            {currentCoinData && (
+              <PriceDisplay
+                currentCoinData={currentCoinData}
+                marketData={tickerData || undefined}
+                tradingMode={selectedMarket}
+              />
+            )}
           </div>
         </div>
 

@@ -141,11 +141,17 @@ function parseTimeframe(tf: string): number {
 
 // --- API FUNCTIONS ---
 
-async function fetchRawSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<BackendSymbolsResponse> {
+async function fetchRawSymbols(
+  exchange: Exchange = DEFAULT_EXCHANGE,
+  marketFilter?: string
+): Promise<BackendSymbolsResponse> {
   try {
-    const response = await apiClient.get(`/api/market/symbols`, { 
-      params: { exchange } 
-    });
+    const params: any = { exchange };
+    if (marketFilter) {
+      params.market = marketFilter;
+    }
+    
+    const response = await apiClient.get(`/api/market/symbols`, { params });
     return response.data;
   } catch (error) {
     console.error(`[SymbolsAPI] Failed to fetch symbols from ${exchange}:`, error);
@@ -165,10 +171,13 @@ async function fetchRawTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promise<B
   }
 }
 
-export async function getSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promise<ApiResponse> {
+export async function getSymbols(
+  exchange: Exchange = DEFAULT_EXCHANGE, 
+  marketFilter?: string
+): Promise<ApiResponse> {
   try {
     const [symbolsData, tickersData] = await Promise.all([
-      fetchRawSymbols(exchange),
+      fetchRawSymbols(exchange, marketFilter),
       fetchRawTickers(exchange)
     ]);
     
