@@ -157,6 +157,8 @@ export function CoinStatusProvider({ children }: { children: React.ReactNode }) 
   const enableHistoric = async (symbol: string, market: string) => {
     const key = `${symbol}_${market}`;
     
+    console.log(`[CoinStatus] enableHistoric called for ${symbol}/${market}`);
+    
     // Optimistic Update
     dispatch({
       type: 'UPDATE_COIN_STATUS',
@@ -165,36 +167,57 @@ export function CoinStatusProvider({ children }: { children: React.ReactNode }) 
 
     try {
       // Hole bestehende Settings für diesen Coin
+      console.log(`[CoinStatus] Fetching existing settings for ${symbol}/${market}`);
       const existingSettings = await getSettings(undefined, symbol, market);
       const currentSetting: Partial<CoinSetting> = existingSettings[0] || {};
       
-      const success = await saveSettings({
+      const defaultUntilDate = '2017-01-01';
+      const settingsToSave = {
+        exchange: 'bitget', // Default exchange
         symbol,
         market,
         store_live: true, // Historic braucht auch Live
         load_history: true,
-        history_until: currentSetting.history_until || '2017-01-01',
+        history_until: defaultUntilDate, // Immer 2017-01-01 als Default
         favorite: currentSetting.favorite || false,
         chart_resolution: currentSetting.chart_resolution || '1m',
         db_resolutions: currentSetting.db_resolutions || []
-      });
+      };
+      
+      console.log(`[CoinStatus] Saving historic settings:`, settingsToSave);
+      const success = await saveSettings(settingsToSave);
 
       if (!success) {
+        console.error(`[CoinStatus] Failed to save historic settings for ${symbol}/${market}`);
         // Revert bei Fehler
         dispatch({
           type: 'UPDATE_COIN_STATUS',
           payload: { coin: key, status: { historic: false } }
         });
         dispatch({ type: 'SET_ERROR', payload: 'Failed to enable historic data' });
+      } else {
+        console.log(`[CoinStatus] Successfully enabled historic for ${symbol}/${market}`);
+        // Success Update: historic: true, live: true, until_date setzen
+        dispatch({
+          type: 'UPDATE_COIN_STATUS',
+          payload: { 
+            coin: key, 
+            status: { 
+              historic: true,
+              live: true, // Historic aktiviert auch Live
+              until_date: defaultUntilDate
+            } 
+          }
+        });
       }
     } catch (error) {
+      console.error(`[CoinStatus] Error enabling historic for ${symbol}/${market}:`, error);
       // Revert bei Fehler
       dispatch({
         type: 'UPDATE_COIN_STATUS',
         payload: { coin: key, status: { historic: false } }
       });
       dispatch({ type: 'SET_ERROR', payload: 'Error enabling historic data' });
-      console.error('Error enabling historic:', error);
     }
   };
 
