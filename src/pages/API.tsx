@@ -57,6 +57,15 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
       registerUrl: "https://www.coingecko.com/en/api",
       status: "not_configured"
     },
+    binance: {
+      name: "Binance",
+      key: "",
+      secret: "",
+      url: "https://api.binance.com/api/v3",
+      description: "Exchange data for trading and market analysis",
+      registerUrl: "https://www.binance.com/en/binance-api",
+      status: "not_configured"
+    },
     bitget: {
       name: "Bitget",
       key: "",
@@ -138,9 +147,25 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
     const config = apiKeys[provider];
     if (!config) return;
     
-    // Spezielle Behandlung für Bitget
+    // Spezielle Behandlung für Exchange APIs
     if (provider === 'bitget') {
       if (!config.key || !config.secret || !config.passphrase) {
+        setApiKeys(prev => {
+          const current = prev[provider];
+          if (!current) return prev;
+          return {
+            ...prev,
+            [provider]: {
+              ...current,
+              status: "error",
+              lastChecked: new Date().toISOString()
+            } as APIKeyConfig
+          };
+        });
+        return;
+      }
+    } else if (provider === 'binance') {
+      if (!config.key || !config.secret) {
         setApiKeys(prev => {
           const current = prev[provider];
           if (!current) return prev;
@@ -162,14 +187,23 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
     setLoading(prev => ({ ...prev, [provider]: true }));
 
     try {
-      const payload = provider === 'bitget' 
-        ? { 
-            provider,
-            apiKey: config.key,
-            secret: config.secret,
-            passphrase: config.passphrase
-          }
-        : { provider, apiKey: config.key };
+      let payload;
+      if (provider === 'bitget') {
+        payload = { 
+          provider,
+          apiKey: config.key,
+          secret: config.secret,
+          passphrase: config.passphrase
+        };
+      } else if (provider === 'binance') {
+        payload = {
+          provider,
+          apiKey: config.key,
+          secret: config.secret
+        };
+      } else {
+        payload = { provider, apiKey: config.key };
+      }
 
       const response = await fetch(`${API_BASE}/api/settings/validate-api-key`, {
         method: 'POST',
@@ -226,6 +260,11 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
               key: config.key,
               secret: config.secret,
               passphrase: config.passphrase
+            }];
+          } else if (provider === 'binance') {
+            return [provider, {
+              key: config.key,
+              secret: config.secret
             }];
           }
           return [provider, config.key];
@@ -410,8 +449,8 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
                     </div>
                   </div>
 
-                  {/* Bitget-spezifische Felder */}
-                  {provider === 'bitget' && (
+                  {/* Exchange-spezifische Felder - Binance und Bitget */}
+                  {(provider === 'binance' || provider === 'bitget') && (
                     <>
                       {/* Secret Key */}
                       <div className="space-y-2">
@@ -437,29 +476,31 @@ const API = ({ onBackToTrading }: APIProps = {}) => {
                         </div>
                       </div>
                       
-                      {/* Passphrase */}
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-gray-300">
-                          Passphrase
-                        </label>
-                        <div className="relative">
-                          <Input
-                            type={showPassphrases[provider] ? "text" : "password"}
-                            value={config.passphrase || ''}
-                            onChange={(e) => handleKeyChange(provider, 'passphrase', e.target.value)}
-                            placeholder="Enter your Passphrase"
-                            className="bg-gray-700 border-gray-600 text-white pr-20"
-                          />
-                          <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
-                            <button
-                              onClick={() => setShowPassphrases(prev => ({ ...prev, [provider]: !prev[provider] }))}
-                              className="p-1 text-gray-400 hover:text-white transition-colors"
-                            >
-                              {showPassphrases[provider] ? <EyeOff size={16} /> : <Eye size={16} />}
-                            </button>
+                      {/* Passphrase - nur für Bitget */}
+                      {provider === 'bitget' && (
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-gray-300">
+                            Passphrase
+                          </label>
+                          <div className="relative">
+                            <Input
+                              type={showPassphrases[provider] ? "text" : "password"}
+                              value={config.passphrase || ''}
+                              onChange={(e) => handleKeyChange(provider, 'passphrase', e.target.value)}
+                              placeholder="Enter your Passphrase"
+                              className="bg-gray-700 border-gray-600 text-white pr-20"
+                            />
+                            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex gap-1">
+                              <button
+                                onClick={() => setShowPassphrases(prev => ({ ...prev, [provider]: !prev[provider] }))}
+                                className="p-1 text-gray-400 hover:text-white transition-colors"
+                              >
+                                {showPassphrases[provider] ? <EyeOff size={16} /> : <Eye size={16} />}
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      )}
                     </>
                   )}
 
