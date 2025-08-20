@@ -301,14 +301,6 @@ const Database = ({ onBackToTrading }: DatabaseProps = {}) => {
                 <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
                 Refresh
               </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-              >
-                <Save size={16} />
-                {saving ? 'Saving...' : 'Save Settings'}
-              </button>
               <ThemeToggle />
             </div>
           </div>
