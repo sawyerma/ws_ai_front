@@ -5,7 +5,6 @@ import { getSymbols, ApiSymbol, clearCache, Exchange } from '../../api/symbols';
 interface AdvancedCoinSelectorProps {
   selectedSymbol: string;
   onSymbolSelect: (symbol: string, market: string) => void;
-  onSettingsClick?: () => void;
   exchange?: Exchange;
   selectedMarket?: string;
   maxHeight?: number;
@@ -14,7 +13,6 @@ interface AdvancedCoinSelectorProps {
 const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
   selectedSymbol,
   onSymbolSelect,
-  onSettingsClick,
   exchange = "bitget",
   selectedMarket,
   maxHeight = 500,
@@ -272,19 +270,6 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
               >
                 <RefreshCw size={10} className={loading ? 'animate-spin' : ''} />
               </button>
-              {onSettingsClick && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onSettingsClick();
-                    setIsOpen(false);
-                  }}
-                  className="p-0.5 text-gray-400 hover:text-white"
-                  title="Settings"
-                >
-                  <Settings size={10} />
-                </button>
-              )}
             </div>
           </div>
         </div>

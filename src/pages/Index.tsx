@@ -5,7 +5,6 @@ import PriceDisplay from "../components/ui/price-display";
 import TimeButtons from "../components/ui/time-buttons";
 import ChartSection from "../components/ui/chart-section";
 import AdvancedCoinSelector from "../components/ui/advanced-coin-selector";
-import CoinSettingsModal from "../components/ui/coin-settings-modal";
 import ThemeProvider from "../components/ui/theme-provider";
 import Database from "./Database";
 import AI from "./AI";
@@ -48,7 +47,6 @@ const Index = () => {
   const [selectedExchange, setSelectedExchange] = useState<Exchange>("bitget");
   const [tradingMode, setTradingMode] = useState("Market"); // Start with Market (alle)
   const [selectedMarketType, setSelectedMarketType] = useState("Market"); // Präziser Markttyp
-  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [currentCoinData, setCurrentCoinData] = useState<CoinData | null>(null);
 
   // Daten-Fetching mit React Query für Symbole
@@ -226,7 +224,6 @@ const Index = () => {
               <AdvancedCoinSelector
                 selectedSymbol={currentCoinData?.symbol || ''}
                 onSymbolSelect={handleSymbolSelect}
-                onSettingsClick={() => setSettingsModalOpen(true)}
                 exchange={selectedExchange}
                 selectedMarket={tradingMode}
               />
@@ -261,14 +258,6 @@ const Index = () => {
           onIndicatorRemove={handleIndicatorRemove}
           historicalData={ohlcData}
           isLoading={isLoadingOhlc}
-        />
-
-        {/* Settings Modal */}
-        <CoinSettingsModal
-          isOpen={settingsModalOpen}
-          onClose={() => setSettingsModalOpen(false)}
-          selectedSymbol={selectedCoin}
-          selectedMarket={selectedMarket}
         />
       </div>
     </ThemeProvider>
