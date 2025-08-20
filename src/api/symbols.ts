@@ -231,7 +231,8 @@ export async function getSettings(exchange?: Exchange, symbol?: string, market?:
 
 export async function saveSettings(settings: Partial<CoinSetting>): Promise<boolean> {
   try {
-    await apiClient.post(`/api/config/settings`, settings);
+    // Backend erwartet PUT Request und Array von Settings
+    await apiClient.put(`/api/config/settings`, [settings]);
     return true;
   } catch (error) {
     console.error('[SymbolsAPI] Failed to save settings:', error);

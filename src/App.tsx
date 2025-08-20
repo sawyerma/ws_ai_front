@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
 import Database from "./pages/Database";
+import CoinManagement from "./pages/CoinManagement";
 import NotFound from "./pages/NotFound";
 import { CoinStatusProvider } from "./context/CoinStatusContext";
 
@@ -20,6 +21,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/database" element={<Database />} />
+            <Route path="/coin-management" element={<CoinManagement />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
