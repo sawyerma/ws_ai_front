@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Search, RefreshCw, Settings } from 'lucide-react';
 import { getSymbols, ApiSymbol, clearCache, Exchange } from '../../api/symbols';
+import { useCoinStatus } from '../../context/CoinStatusContext';
 
 interface AdvancedCoinSelectorProps {
   selectedSymbol: string;
@@ -23,6 +24,9 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
+  
+  // Coin Status Context
+  const { coins: coinStatus, enableLive, enableHistoric } = useCoinStatus();
 
   // Load favorites from localStorage
   useEffect(() => {
@@ -131,6 +135,35 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
     saveFavorites(newFavorites);
   };
 
+  // Handle L button click
+  const handleLiveClick = async (symbol: string, market: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await enableLive(symbol.replace('/', ''), market);
+  };
+
+  // Handle H button click
+  const handleHistoricClick = async (symbol: string, market: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await enableHistoric(symbol.replace('/', ''), market);
+  };
+
+  // Get button color based on status
+  const getButtonColor = (symbol: string, market: string, type: 'live' | 'historic') => {
+    const key = `${symbol.replace('/', '')}_${market}`;
+    const status = coinStatus[key];
+    
+    if (type === 'live') {
+      return status?.live ? 'bg-green-500' : 'bg-red-500';
+    }
+    
+    if (type === 'historic') {
+      if (status?.historic === 'loading') return 'bg-orange-500';
+      return status?.historic ? 'bg-green-500' : 'bg-red-500';
+    }
+    
+    return 'bg-gray-500';
+  };
+
   // Handle symbol selection
   const handleSymbolSelect = (symbol: ApiSymbol) => {
     const cleanSymbol = symbol.symbol.replace('/', '');
@@ -232,20 +265,18 @@ const AdvancedCoinSelector: React.FC<AdvancedCoinSelectorProps> = ({
                     {coin.change}
                   </div>
                   <div className="w-[35px] text-center">
-                    <span
-                      className="inline-block w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: "rgb(34, 197, 94)"
-                      }}
-                    ></span>
+                    <button
+                      onClick={(e) => handleLiveClick(coin.symbol, coin.market, e)}
+                      className={`inline-block w-2 h-2 rounded-full cursor-pointer hover:scale-125 transition-transform ${getButtonColor(coin.symbol, coin.market, 'live')}`}
+                      title="Toggle Live Data Collection"
+                    ></button>
                   </div>
                   <div className="w-[12px] text-center">
-                    <span
-                      className="inline-block w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor: coin.market === "spot" ? "rgb(34, 197, 94)" : "rgb(239, 68, 68)"
-                      }}
-                    ></span>
+                    <button
+                      onClick={(e) => handleHistoricClick(coin.symbol, coin.market, e)}
+                      className={`inline-block w-2 h-2 rounded-full cursor-pointer hover:scale-125 transition-transform ${getButtonColor(coin.symbol, coin.market, 'historic')}`}
+                      title="Toggle Historic Data Collection"
+                    ></button>
                   </div>
                 </div>
               ))
