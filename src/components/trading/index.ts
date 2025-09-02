@@ -1,2 +1,5 @@
 // components/trading/index.ts - Trading exports
-// This will be populated as we create trading components
+export { OrderBook } from './OrderBook';
+export { MarketTrades } from './MarketTrades';
+export { PriceDisplay } from './PriceDisplay';
+export { TradingTerminal } from './TradingTerminal';
