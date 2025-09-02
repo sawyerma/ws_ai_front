@@ -1,0 +1,100 @@
+/* styles/globals.css - ALLE Farben und Variablen zentral */
+:root {
+  /* === TRADING COLORS === */
+  --color-buy: #22c55e;
+  --color-sell: #ef4444;
+  --color-neutral: #6b7280;
+  --color-warning: #f59e0b;
+  --color-info: #3b82f6;
+  
+  /* === BACKGROUND COLORS === */
+  --bg-primary: #1e1f23;        /* Haupt-Hintergrund */
+  --bg-secondary: #17181c;      /* Sidebar, Cards */
+  --bg-tertiary: #111827;       /* Dropdowns, Modals */
+  --bg-chart: #1f2937;          /* Chart-Hintergrund */
+  
+  /* === TEXT COLORS === */
+  --text-primary: #ffffff;      /* Haupt-Text */
+  --text-secondary: #9ca3af;    /* Sekundär-Text */
+  --text-muted: #6b7280;        /* Muted-Text */
+  --text-accent: #3b82f6;       /* Akzent-Text */
+  
+  /* === BORDERS & SPACING === */
+  --border-color: #374151;
+  --border-radius: 8px;
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  
+  /* === CHART SPECIFIC === */
+  --chart-grid-color: #374151;
+  --chart-candle-up: var(--color-buy);
+  --chart-candle-down: var(--color-sell);
+}
+
+/* === TRADING-SPEZIFISCHE KLASSEN === */
+.price-display {
+  @apply text-2xl font-bold tracking-wide;
+}
+
+.price-up {
+  color: var(--color-buy);
+}
+
+.price-down {
+  color: var(--color-sell);
+}
+
+.trading-button {
+  @apply px-4 py-2 rounded-lg transition-colors;
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+}
+
+.trading-button:hover {
+  background-color: var(--bg-tertiary);
+}
+
+.trading-button.active {
+  background-color: var(--color-info);
+  color: white;
+}
+
+.status-indicator {
+  @apply w-2 h-2 rounded-full;
+}
+
+.status-indicator.connected {
+  background-color: var(--color-buy);
+}
+
+.status-indicator.error {
+  background-color: var(--color-sell);
+}
+
+.status-indicator.pending {
+  background-color: var(--color-warning);
+}
+
+/* === LAYOUT KLASSEN === */
+.page-container {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  font-family: 'Inter', 'ui-sans-serif', 'system-ui', 'sans-serif';
+}
+
+.page-header {
+  background-color: var(--bg-secondary);
+  border-bottom: 1px solid var(--border-color);
+  padding: var(--spacing-md);
+}
+
+.card-container {
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md);
+}
