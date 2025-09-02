@@ -245,6 +245,8 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
       f2: `${(rnd(-10, 10) > 0 ? '+' : '')${rnd(-10, 10).toFixed(1)}% / ${(rnd(-25, 25) > 0 ? '+' : '')${rnd(-25, 25).toFixed(1)}%`,
       var: `${rnd(1.0, 4.0).toFixed(2)}% / ${rnd(1.5, 6.0).toFixed(2)}%`,
       sharpe: rnd(0.4, 2.2).toFixed(2)
+    }
+    )
     });
   };
 
@@ -280,18 +282,20 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
     
     if (currentTier === 1) {
       setNlText(`🚀 TIER 1 QUANTUM SCREENER - ${selectedSymbol}
+  }
+}
 Score: ${coin.score}/100 | Confidence: ${Math.min(coin.score + Math.random() * 10 - 5, 100).toFixed(1)}%
 Whale Impact: ${tierAnalysis.tier1.whaleImpact} | Toxicity: ${tierAnalysis.tier1.toxicity}
 Flow Direction: ${tierAnalysis.tier1.flowDir} | Volume Ratio: ${tierAnalysis.tier1.volumeRatio}
 Recommendation: ${coin.score >= 70 ? 'Promote to Tier 2' : 'Continue monitoring'}`);
     } else if (currentTier === 2) {
-      setNlText(`🎯 TIER 2 STRATEGY ENGINE - ${selectedSymbol}
+      setNlText(\`🎯 TIER 2 STRATEGY ENGINE - ${selectedSymbol}
 Pattern Confidence: ${tierAnalysis.tier2.patternConf} | Regime: ${tierAnalysis.tier2.regime}
 Strategy Fit: ${tierAnalysis.tier2.strategyFit} | Market Phase: ${tierAnalysis.tier2.marketPhase}
 Grid: ${kpis.grid}/100 | Day Trading: ${kpis.day}/100 | Pattern: ${kpis.pattern}/100
 Recommendation: ${coin.score >= 85 ? 'Promote to Tier 3' : 'Continue in Tier 2'}`);
     } else {
-      setNlText(`🔮 TIER 3 DEEP FORECAST - ${selectedSymbol}
+      setNlText(\`🔮 TIER 3 DEEP FORECAST - ${selectedSymbol}
 TFT Confidence: ${tierAnalysis.tier3.tftConf} | N-BEATS Accuracy: ${tierAnalysis.tier3.nbeatsAcc}
 Risk Score: ${tierAnalysis.tier3.riskScore} | Position Size: ${tierAnalysis.tier3.posSize}
 VaR: ${tierAnalysis.tier3.var} | CVaR: ${tierAnalysis.tier3.cvar}
