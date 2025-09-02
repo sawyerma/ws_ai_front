@@ -1,2 +1,5 @@
 // components/navigation/index.ts - Navigation exports  
-// This will be populated as we create navigation components
+export { TradingNav } from './TradingNav';
+export { ViewSelector } from './ViewSelector';
+export { MarketSelector } from './MarketSelector';
+export { ExchangeSelector } from './ExchangeSelector';
