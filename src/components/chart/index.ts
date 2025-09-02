@@ -1,2 +1,5 @@
 // components/chart/index.ts - Chart exports
-// This will be populated as we create chart components
+export { ChartView } from './ChartView';
+export { ChartWebSocket } from './ChartWebSocket';
+export { ChartStatus } from './ChartStatus';
+export { ChartContainer } from './ChartContainer';
