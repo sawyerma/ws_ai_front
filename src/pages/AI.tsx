@@ -105,9 +105,6 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   Reset
                 </button>
               </div>
-    </ThemeProvider>
-  );
-};
 
               {/* Tier Badges */}
               <div style={{ display: 'flex', gap: '6px', margin: '6px 0 10px' }}>
@@ -115,6 +112,20 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   <button
                     key={tier}
                     style={{
+                      fontSize: '11px',
+                      borderRadius: '999px',
+                      padding: '2px 8px',
+                      backgroundColor: tier === "all" ? '#2f81f7' : '#1f242d',
+                      border: `1px solid ${tier === "all" ? '#2f81f7' : '#2b3138'}`,
+                      color: tier === "all" ? '#e6edf3' : '#8b949e',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {tier === "all" ? "Alle" : `Tier ${tier}`}
+                  </button>
+                ))}
+              </div>
+
               {/* Coin List */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 {['BTCUSDT', 'ETHUSDT', 'SOLUSDT', 'BNBUSDT', 'XRPUSDT', 'ADAUSDT', 'AVAXUSDT', 'DOGEUSDT'].map((symbol, i) => {
@@ -150,7 +161,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                 })}
               </div>
             </aside>
-                      fontSize: '11px',
+
             {/* Center Panel: Tabs + Chart + NL */}
             <section style={{
               backgroundColor: '#161b22',
@@ -203,7 +214,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   Promote →
                 </button>
               </div>
-                      borderRadius: '999px',
+
               {/* Controls */}
               <div style={{
                 display: 'flex',
@@ -282,7 +293,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   Chart-Screenshot
                 </button>
               </div>
-                      padding: '2px 8px',
+
               {/* Chart Area */}
               <div style={{
                 position: 'relative',
@@ -317,7 +328,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   BTCUSDT $42,350.50 +0.5%
                 </div>
               </div>
-                      backgroundColor: tier === "all" ? '#2f81f7' : '#1f242d',
+
               {/* Natural Language Engine */}
               <div style={{ borderTop: '1px solid #2b3138', padding: '12px' }}>
                 <div style={{ fontWeight: 600, marginBottom: '8px' }}>Natural Language Engine</div>
@@ -400,7 +411,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                 </div>
               </div>
             </section>
-                      border: `1px solid ${tier === "all" ? '#2f81f7' : '#2b3138'}`,
+
             {/* Right Panel: KPIs + Analysis */}
             <aside style={{
               backgroundColor: '#161b22',
@@ -451,7 +462,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   </div>
                 </div>
               </div>
-                      color: tier === "all" ? '#e6edf3' : '#8b949e',
+
               {/* Strategy Scores */}
               <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
                 <div style={{ fontWeight: 600, marginBottom: '8px' }}>Strategy-Scores</div>
@@ -494,7 +505,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
                   </div>
                 </div>
               </div>
-                      cursor: 'pointer'
+
               {/* Tier 1 Analysis */}
               <div style={{ padding: '12px' }}>
                 <div style={{ fontWeight: 600, marginBottom: '12px' }}>Tier 1 - Quantum Screener Analysis</div>
@@ -579,7 +590,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
               </div>
             </aside>
           </div>
-                    }}
+
           {/* Bottom Ticker */}
           <footer style={{
             display: 'flex',
@@ -622,7 +633,7 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
             </div>
           </footer>
         </div>
-                  >
+
         <style jsx>{`
           @keyframes scroll {
             from { transform: translateX(0); }
@@ -630,8 +641,8 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
           }
         `}</style>
       </div>
-                    {tier === "all" ? "Alle" : `Tier ${tier}`}
-                  </button>
-                ))}
-              </div>
+    </ThemeProvider>
+  );
+};
+
 export default AI;
