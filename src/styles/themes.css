@@ -1,0 +1,60 @@
+/* Theme system for dark/light mode support */
+
+/* Dark theme (default) */
+[data-theme="dark"] {
+  --bg-primary: #1e1f23;
+  --bg-secondary: #17181c;
+  --bg-tertiary: #111827;
+  --bg-chart: #1f2937;
+  
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+  
+  --border-color: #374151;
+}
+
+/* Light theme */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-chart: #ffffff;
+  
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  
+  --border-color: #e2e8f0;
+}
+
+/* System theme preference */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #1e1f23;
+    --bg-secondary: #17181c;
+    --bg-tertiary: #111827;
+    --bg-chart: #1f2937;
+    
+    --text-primary: #ffffff;
+    --text-secondary: #9ca3af;
+    --text-muted: #6b7280;
+    
+    --border-color: #374151;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-primary: #ffffff;
+    --bg-secondary: #f8fafc;
+    --bg-tertiary: #f1f5f9;
+    --bg-chart: #ffffff;
+    
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    
+    --border-color: #e2e8f0;
+  }
+}
