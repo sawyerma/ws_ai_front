@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ThemeProvider from "../components/ui/theme-provider";
+import ThemeToggle from "../components/ui/theme-toggle";
 
 interface AIProps {
   onBackToTrading?: () => void;
@@ -245,8 +246,6 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
       f2: `${(rnd(-10, 10) > 0 ? '+' : '')${rnd(-10, 10).toFixed(1)}% / ${(rnd(-25, 25) > 0 ? '+' : '')${rnd(-25, 25).toFixed(1)}%`,
       var: `${rnd(1.0, 4.0).toFixed(2)}% / ${rnd(1.5, 6.0).toFixed(2)}%`,
       sharpe: rnd(0.4, 2.2).toFixed(2)
-    }
-    )
     });
   };
 
@@ -282,20 +281,18 @@ const AI = ({ onBackToTrading }: AIProps = {}) => {
     
     if (currentTier === 1) {
       setNlText(`🚀 TIER 1 QUANTUM SCREENER - ${selectedSymbol}
-  }
-}
 Score: ${coin.score}/100 | Confidence: ${Math.min(coin.score + Math.random() * 10 - 5, 100).toFixed(1)}%
 Whale Impact: ${tierAnalysis.tier1.whaleImpact} | Toxicity: ${tierAnalysis.tier1.toxicity}
 Flow Direction: ${tierAnalysis.tier1.flowDir} | Volume Ratio: ${tierAnalysis.tier1.volumeRatio}
 Recommendation: ${coin.score >= 70 ? 'Promote to Tier 2' : 'Continue monitoring'}`);
     } else if (currentTier === 2) {
-      setNlText(\`🎯 TIER 2 STRATEGY ENGINE - ${selectedSymbol}
+      setNlText(`🎯 TIER 2 STRATEGY ENGINE - ${selectedSymbol}
 Pattern Confidence: ${tierAnalysis.tier2.patternConf} | Regime: ${tierAnalysis.tier2.regime}
 Strategy Fit: ${tierAnalysis.tier2.strategyFit} | Market Phase: ${tierAnalysis.tier2.marketPhase}
 Grid: ${kpis.grid}/100 | Day Trading: ${kpis.day}/100 | Pattern: ${kpis.pattern}/100
 Recommendation: ${coin.score >= 85 ? 'Promote to Tier 3' : 'Continue in Tier 2'}`);
     } else {
-      setNlText(\`🔮 TIER 3 DEEP FORECAST - ${selectedSymbol}
+      setNlText(`🔮 TIER 3 DEEP FORECAST - ${selectedSymbol}
 TFT Confidence: ${tierAnalysis.tier3.tftConf} | N-BEATS Accuracy: ${tierAnalysis.tier3.nbeatsAcc}
 Risk Score: ${tierAnalysis.tier3.riskScore} | Position Size: ${tierAnalysis.tier3.posSize}
 VaR: ${tierAnalysis.tier3.var} | CVaR: ${tierAnalysis.tier3.cvar}
@@ -335,9 +332,9 @@ Recommendation: ${Math.random() > 0.3 ? 'EXECUTE TRADE' : 'HOLD'}`);
   });
 
   const getScoreClass = (score: number) => {
-    if (score >= 85) return 's-high';
-    if (score >= 70) return 's-mid';
-    return 's-low';
+    if (score >= 85) return 'text-green-400 bg-green-900/20';
+    if (score >= 70) return 'text-yellow-400 bg-yellow-900/20';
+    return 'text-gray-400 bg-gray-700/20';
   };
 
   const formatPrice = (price: number) => {
@@ -347,971 +344,532 @@ Recommendation: ${Math.random() > 0.3 ? 'EXECUTE TRADE' : 'HOLD'}`);
   const selectedCoin = universe.find(u => u.symbol === selectedSymbol);
 
   return (
-    <div style={{
-      margin: 0,
-      background: '#0d1117',
-      color: '#e6edf3',
-      font: '14px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto',
-      minHeight: '100vh',
-      display: 'grid',
-      gridTemplateRows: '56px 1fr 52px'
-    }}>
-      {/* Topbar */}
-      <header style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '0 16px',
-        background: '#161b22',
-        borderBottom: '1px solid #2b3138'
-      }}>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', fontWeight: 600 }}>
-          <span style={{ fontSize: '18px' }}>⚡</span>
-          <span>Quantum Screener</span>
-          <span style={{ fontSize: '12px', color: '#8b949e' }}>Tier 1/2/3 Architecture</span>
-        </div>
-        <div style={{ display: 'flex', gap: '16px', color: '#8b949e', fontSize: '12px' }}>
-          <span>
-            <span style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '50%', 
-              background: '#3fb950',
-              display: 'inline-block',
-              marginRight: '4px'
-            }}></span>
-            Tier 1 aktiv
-          </span>
-          <span>
-            <span style={{ 
-              width: '8px', 
-              height: '8px', 
-              borderRadius: '50%', 
-              background: '#d29922',
-              display: 'inline-block',
-              marginRight: '4px'
-            }}></span>
-            Coins: <b>{universe.length}</b>
-          </span>
-          <span>{clock}</span>
-          <span>Auto-Refresh: <b>{refreshCountdown}</b>s</span>
-        </div>
-      </header>
-
-      {/* Main Content */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '280px 1fr 360px',
-        gap: '1px',
-        background: '#2b3138',
-        minHeight: 0
-      }}>
-        {/* Left Panel - Coins */}
-        <aside style={{
-          background: '#161b22',
-          display: 'flex',
-          flexDirection: 'column',
-          padding: '12px',
-          overflow: 'auto'
-        }}>
-          <div style={{ fontWeight: 600, margin: '8px 0 10px' }}>Coins</div>
-          
-          {/* Search */}
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <input
-              type="text"
-              placeholder="Symbol suchen… (z. B. BTCUSDT)"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              style={{
-                flex: 1,
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                color: '#e6edf3',
-                borderRadius: '6px',
-                padding: '8px',
-                fontSize: '14px'
-              }}
-            />
-            <button
-              onClick={() => {
-                setSearchTerm('');
-                setTierFilter('all');
-              }}
-              style={{
-                border: '1px solid #2b3138',
-                background: '#1f242d',
-                color: '#e6edf3',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Reset
-            </button>
+    <ThemeProvider>
+      <div className="min-h-screen bg-[#0d1117] text-[#e6edf3] font-['ui-sans-serif','system-ui','-apple-system','Segoe_UI','Roboto'] text-sm leading-[1.45]">
+        {/* Topbar */}
+        <header className="flex items-center justify-between px-4 py-3 bg-[#161b22] border-b border-[#2b3138] h-14">
+          <div className="flex items-center gap-2 font-semibold">
+            <span className="text-lg">⚡</span>
+            <span>Quantum Screener</span>
+            <span className="text-xs text-[#8b949e]">Tier 1/2/3 Architecture</span>
           </div>
-
-          {/* Tier Badges */}
-          <div style={{ display: 'flex', gap: '6px', margin: '6px 0 10px' }}>
-            {['all', '1', '2', '3'].map(tier => (
-              <span
-                key={tier}
-                onClick={() => setTierFilter(tier)}
-                style={{
-                  fontSize: '11px',
-                  borderRadius: '999px',
-                  padding: '2px 8px',
-                  background: '#1f242d',
-                  border: tierFilter === tier ? '1px solid #2f81f7' : '1px solid #2b3138',
-                  color: tierFilter === tier ? '#e6edf3' : '#8b949e',
-                  cursor: 'pointer'
-                }}
-              >
-                {tier === 'all' ? 'Alle' : `Tier ${tier}`}
-              </span>
-            ))}
-          </div>
-
-          {/* Coin List */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '10px' }}>
-            {filteredUniverse.map(coin => (
-              <div
-                key={coin.symbol}
-                onClick={() => handleSymbolSelect(coin.symbol)}
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '8px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  background: selectedSymbol === coin.symbol ? '#1f242d' : 'transparent',
-                  outline: selectedSymbol === coin.symbol ? '1px solid #2f81f7' : 'none'
-                }}
-                onMouseEnter={(e) => {
-                  if (selectedSymbol !== coin.symbol) {
-                    e.currentTarget.style.background = '#1f242d';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (selectedSymbol !== coin.symbol) {
-                    e.currentTarget.style.background = 'transparent';
-                  }
-                }}
-              >
-                <span style={{ fontFamily: 'ui-monospace, SFMono-Regular', fontSize: '13px' }}>
-                  {coin.symbol}
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    background: coin.score >= 85 ? 'rgba(63,185,80,.18)' : 
-                               coin.score >= 70 ? 'rgba(210,153,34,.18)' : 'rgba(139,148,158,.18)',
-                    color: coin.score >= 85 ? '#3fb950' : 
-                           coin.score >= 70 ? '#d29922' : '#8b949e'
-                  }}
-                >
-                  {coin.score}
-                </span>
-              </div>
-            ))}
-          </div>
-        </aside>
-
-        {/* Center Panel - Chart & Controls */}
-        <section style={{
-          background: '#161b22',
-          display: 'flex',
-          flexDirection: 'column'
-        }}>
-          {/* Tier Tabs */}
-          <div style={{ display: 'flex', borderBottom: '1px solid #2b3138' }}>
-            {[1, 2, 3].map(tier => (
-              <div
-                key={tier}
-                onClick={() => handleTierChange(tier)}
-                style={{
-                  padding: '10px 14px',
-                  cursor: 'pointer',
-                  fontWeight: 600,
-                  color: currentTier === tier ? '#e6edf3' : '#8b949e',
-                  borderBottom: currentTier === tier ? '2px solid #2f81f7' : 'none',
-                  fontSize: '14px'
-                }}
-              >
-                TIER {tier} · {tier === 1 ? 'Quantum Screener' : tier === 2 ? 'Strategy Engine' : 'Deep Forecast'}
-              </div>
-            ))}
-            <div style={{ flex: 1 }}></div>
-            <div
-              onClick={() => {
-                if (currentTier < 3) {
-                  handleTierChange(currentTier + 1);
-                }
-              }}
-              style={{
-                padding: '10px 14px',
-                cursor: currentTier < 3 ? 'pointer' : 'not-allowed',
-                fontWeight: 600,
-                color: currentTier < 3 ? '#8b949e' : '#4a4a4a',
-                fontSize: '14px'
-              }}
-            >
-              Promote →
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div style={{
-            display: 'flex',
-            gap: '12px',
-            alignItems: 'center',
-            padding: '10px 12px',
-            borderBottom: '1px solid #2b3138'
-          }}>
-            <div style={{
-              border: '1px solid #2f81f7',
-              background: '#1f242d',
-              color: '#e6edf3',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}>
-              {selectedSymbol}
-            </div>
-            <div style={{
-              border: '1px solid #2b3138',
-              background: '#1f242d',
-              color: '#e6edf3',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}>
-              {selectedCoin ? formatPrice(selectedCoin.price) : '—'}
-            </div>
-            <div style={{
-              border: '1px solid #2b3138',
-              background: '#1f242d',
-              color: '#e6edf3',
-              padding: '6px 10px',
-              borderRadius: '6px',
-              fontSize: '14px'
-            }}>
-              Score: {selectedCoin?.score || '—'}
-            </div>
-            <div style={{ flex: 1 }}></div>
-            
-            {/* Timeframe buttons */}
-            {['1m', '5m', '15m', '1h', '4h', '1d'].map(tf => (
-              <div
-                key={tf}
-                onClick={() => handleTimeframeChange(tf)}
-                style={{
-                  border: selectedTimeframe === tf ? '1px solid #2f81f7' : '1px solid #2b3138',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '6px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                {tf}
-              </div>
-            ))}
-            
-            <button
-              onClick={() => setShowIndicatorModal(true)}
-              style={{
-                border: '1px solid #2b3138',
-                background: '#1f242d',
-                color: '#e6edf3',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Indikatoren
-            </button>
-            
-            <button
-              style={{
-                border: '1px solid #2b3138',
-                background: '#1f242d',
-                color: '#e6edf3',
-                padding: '6px 10px',
-                borderRadius: '6px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Chart-Screenshot
-            </button>
-          </div>
-
-          {/* Chart */}
-          <div style={{ position: 'relative', flex: 1, minHeight: '320px' }}>
-            <div ref={chartRef} style={{ position: 'absolute', inset: 0 }}></div>
-            <div style={{
-              position: 'absolute',
-              left: '12px',
-              top: '12px',
-              background: 'rgba(13,17,23,.8)',
-              border: '1px solid #2b3138',
-              padding: '8px 10px',
-              borderRadius: '6px',
-              fontSize: '12px'
-            }}>
-              {selectedSymbol} {selectedCoin ? formatPrice(selectedCoin.price) : '—'}
-            </div>
-          </div>
-
-          {/* Natural Language Block */}
-          <div style={{ borderTop: '1px solid #2b3138', padding: '12px' }}>
-            <div style={{ fontWeight: 600, marginBottom: '8px', fontSize: '14px' }}>Natural Language Engine</div>
-            <div style={{
-              whiteSpace: 'pre-wrap',
-              background: '#1f242d',
-              border: '1px solid #2b3138',
-              borderRadius: '8px',
-              padding: '10px',
-              minHeight: '88px',
-              fontSize: '14px'
-            }}>
-              {nlText}
-            </div>
-            <div style={{ display: 'flex', gap: '8px', marginTop: '8px', flexWrap: 'wrap' }}>
-              <textarea
-                value={nlPrompt}
-                onChange={(e) => setNlPrompt(e.target.value)}
-                placeholder="Nachricht oder Analyse schreiben…"
-                style={{
-                  flex: 1,
-                  minHeight: '70px',
-                  resize: 'vertical',
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  color: '#e6edf3',
-                  borderRadius: '6px',
-                  padding: '8px',
-                  fontSize: '14px'
-                }}
-              />
-              <select
-                value={nlModel}
-                onChange={(e) => setNlModel(e.target.value)}
-                style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  color: '#e6edf3',
-                  borderRadius: '6px',
-                  padding: '8px',
-                  fontSize: '14px'
-                }}
-              >
-                <option value="local">local:default</option>
-                <option value="anthropic:claude-sonnet-4-20250514">anthropic:claude-sonnet-4-20250514</option>
-                <option value="anthropic:sonnet-4.1-1m">anthropic:sonnet-4.1-1m</option>
-                <option value="openai:gpt-5-thinking">openai:gpt-5-thinking</option>
-              </select>
+          <div className="flex items-center gap-4 text-xs text-[#8b949e]">
+            {onBackToTrading && (
               <button
-                onClick={handleNLSend}
-                style={{
-                  border: '1px solid #2f81f7',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
+                onClick={onBackToTrading}
+                className="px-3 py-2 bg-[#1f242d] text-[#e6edf3] rounded-lg hover:bg-[#2b3138] transition-colors flex items-center gap-2"
               >
-                Senden
+                ← Back to Trading
               </button>
-              <button
-                onClick={handleCopyNL}
-                style={{
-                  border: '1px solid #2b3138',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Text kopieren
-              </button>
-              <button
-                style={{
-                  border: '1px solid #2b3138',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                An Telegram senden
-              </button>
-            </div>
+            )}
+            <span>
+              <span className="inline-block w-2 h-2 bg-[#3fb950] rounded-full mr-1"></span>
+              Tier 1 aktiv
+            </span>
+            <span>
+              <span className="inline-block w-2 h-2 bg-[#d29922] rounded-full mr-1"></span>
+              Coins: <b>{universe.length}</b>
+            </span>
+            <span>{clock}</span>
+            <span>Auto-Refresh: <b>{refreshCountdown}</b>s</span>
+            <ThemeToggle />
           </div>
-        </section>
+        </header>
 
-        {/* Right Panel - KPIs & Analysis */}
-        <aside style={{
-          background: '#161b22',
-          display: 'flex',
-          flexDirection: 'column',
-          overflow: 'auto'
-        }}>
-          {/* Tier KPIs */}
-          <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-            <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Tier-KPIs</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Signals (24h)</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.signals}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Win-Rate</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.winRate}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Avg PnL</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.avgPnL}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Latency</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.latency}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Strategy Scores */}
-          <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-            <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Strategy-Scores</div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Grid</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.grid}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Daytrading</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.day}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Pattern</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.pattern}</div>
-              </div>
-              <div style={{
-                background: '#1f242d',
-                border: '1px solid #2b3138',
-                borderRadius: '6px',
-                padding: '10px'
-              }}>
-                <div style={{ fontSize: '11px', color: '#8b949e' }}>Regime</div>
-                <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.regime}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Tier 3 Forecast & Risk (only visible for Tier 3) */}
-          {currentTier === 3 && (
-            <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-              <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Forecast & Risk</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e' }}>1h / 1d Forecast</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.f1}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e' }}>4h / 7d Forecast</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.f2}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e' }}>VaR / CVaR</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.var}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e' }}>Sharpe</div>
-                  <div style={{ fontSize: '16px', fontWeight: 700, marginTop: '2px' }}>{kpis.sharpe}</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Tier-specific Analysis */}
-          {currentTier === 1 && (
-            <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-              <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Tier 1 - Quantum Screener Analysis</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Whale Impact</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier1.whaleImpact}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Toxicity Score</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier1.toxicity}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Flow Direction</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier1.flowDir}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Volume Ratio</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier1.volumeRatio}</div>
-                </div>
-              </div>
-
-              {/* Feature Importance */}
-              <div style={{ marginTop: '12px' }}>
-                <div style={{ fontWeight: 600, marginTop: '12px', marginBottom: '8px', fontSize: '14px' }}>LightGBM Feature Importance</div>
-                {[
-                  { name: 'Whale Impact', value: 85 },
-                  { name: 'Liquidity', value: 78 },
-                  { name: 'Volatility', value: 65 },
-                  { name: 'Microstructure', value: 72 },
-                  { name: 'ALMA Slope', value: 68 },
-                  { name: 'Regime', value: 58 }
-                ].map(feature => (
-                  <div key={feature.name} style={{ display: 'flex', alignItems: 'center', marginBottom: '6px' }}>
-                    <span style={{ width: '120px', fontSize: '11px', color: '#8b949e' }}>{feature.name}</span>
-                    <div style={{ position: 'relative', flex: 1, height: '8px', background: '#1f242d', borderRadius: '4px' }}>
-                      <div style={{
-                        height: '8px',
-                        background: '#2f81f7',
-                        borderRadius: '4px',
-                        width: `${feature.value}%`
-                      }}></div>
-                      <span style={{
-                        position: 'absolute',
-                        right: '-35px',
-                        fontSize: '10px',
-                        color: '#8b949e',
-                        top: '-1px'
-                      }}>
-                        {feature.value}%
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {currentTier === 2 && (
-            <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-              <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Tier 2 - Strategy Engine Analysis</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Pattern Confidence</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier2.patternConf}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Regime Detection</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier2.regime}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Strategy Fit</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier2.strategyFit}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Market Phase</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier2.marketPhase}</div>
-                </div>
-              </div>
-
-              {/* Strategy Overview */}
-              <div style={{ marginTop: '12px' }}>
-                <div style={{ fontWeight: 600, marginTop: '12px', marginBottom: '8px', fontSize: '14px' }}>Strategy Overview</div>
-                {[
-                  { name: 'Grid Trading', score: 82 },
-                  { name: 'Momentum', score: 76 },
-                  { name: 'Mean Reversion', score: 71 },
-                  { name: 'Breakout', score: 85 }
-                ].map(strategy => (
-                  <div key={strategy.name} style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    padding: '6px 0',
-                    borderBottom: '1px solid #2b3138',
-                    fontSize: '12px'
-                  }}>
-                    <span>{strategy.name}</span>
-                    <span>{strategy.score}/100</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {currentTier === 3 && (
-            <div style={{ borderBottom: '1px solid #2b3138', padding: '12px' }}>
-              <div style={{ fontWeight: 600, margin: '8px 0 10px', fontSize: '14px' }}>Tier 3 - Deep Forecast Analysis</div>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>TFT Confidence</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier3.tftConf}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>N-BEATS Accuracy</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier3.nbeatsAcc}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Risk Score</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier3.riskScore}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '10px',
-                  fontSize: '12px'
-                }}>
-                  <div style={{ color: '#8b949e', marginBottom: '4px' }}>Position Size</div>
-                  <div style={{ fontWeight: 600, fontFamily: 'JetBrains Mono, monospace' }}>{tierAnalysis.tier3.posSize}</div>
-                </div>
-              </div>
-
-              {/* Forecast Visualization */}
-              <div style={{ marginTop: '12px' }}>
-                <div style={{ fontWeight: 600, marginTop: '12px', marginBottom: '8px', fontSize: '14px' }}>Forecast Visualization</div>
-                {[
-                  { label: '1h', value: '+2.3%' },
-                  { label: '4h', value: '+5.1%' },
-                  { label: '1d', value: '+8.7%' },
-                  { label: '7d', value: '+15.2%' }
-                ].map(forecast => (
-                  <div key={forecast.label} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    marginBottom: '8px'
-                  }}>
-                    <span style={{ fontSize: '11px', color: '#8b949e' }}>{forecast.label}</span>
-                    <span style={{ fontFamily: 'JetBrains Mono, monospace', fontSize: '12px', fontWeight: 600 }}>
-                      {forecast.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Risk Meters */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginTop: '12px' }}>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>VaR</div>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{tierAnalysis.tier3.var}</div>
-                </div>
-                <div style={{
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '8px',
-                  textAlign: 'center'
-                }}>
-                  <div style={{ fontSize: '11px', color: '#8b949e', marginBottom: '4px' }}>CVaR</div>
-                  <div style={{ fontFamily: 'JetBrains Mono, monospace', fontWeight: 600 }}>{tierAnalysis.tier3.cvar}</div>
-                </div>
-              </div>
-            </div>
-          )}
-        </aside>
-      </div>
-
-      {/* Bottom Ticker */}
-      <footer style={{
-        display: 'flex',
-        gap: '12px',
-        alignItems: 'center',
-        padding: '8px 12px',
-        background: '#161b22',
-        borderTop: '1px solid #2b3138',
-        overflow: 'hidden'
-      }}>
-        <div style={{
-          display: 'flex',
-          gap: '16px',
-          whiteSpace: 'nowrap',
-          animation: 'scroll 30s linear infinite'
-        }}>
-          {universe.slice(0, 20).map((coin, i) => {
-            const change = (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3.5).toFixed(1) + '%';
-            const tierColor = coin.tier === 1 ? '#3fb950' : coin.tier === 2 ? '#a371f7' : '#ff7b72';
+        {/* Main Content */}
+        <div className="grid grid-cols-[280px_1fr_360px] gap-px bg-[#2b3138] min-h-[calc(100vh-56px-52px)]">
+          {/* Left Panel - Coins */}
+          <aside className="bg-[#161b22] flex flex-col p-3 overflow-auto">
+            <div className="font-semibold my-2">Coins</div>
             
-            return (
-              <span
-                key={`${coin.symbol}-${i}`}
-                style={{
-                  fontSize: '11px',
-                  border: '1px solid #2b3138',
-                  borderRadius: '6px',
-                  padding: '2px 6px',
-                  color: tierColor
-                }}
-              >
-                {coin.symbol} · {coin.score} · {change} · T{coin.tier}
-              </span>
-            );
-          })}
-        </div>
-      </footer>
-
-      {/* Indicator Modal */}
-      {showIndicatorModal && (
-        <div style={{
-          position: 'fixed',
-          inset: 0,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          background: 'rgba(0,0,0,.5)',
-          zIndex: 50
-        }}>
-          <div style={{
-            background: '#161b22',
-            border: '1px solid #2b3138',
-            borderRadius: '10px',
-            minWidth: '320px',
-            maxWidth: '90vw',
-            padding: '14px'
-          }}>
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '10px'
-            }}>
-              <div style={{ fontWeight: 600, fontSize: '14px' }}>Indikatoren</div>
-              <button
-                onClick={() => setShowIndicatorModal(false)}
-                style={{
-                  border: '1px solid #2b3138',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
-              >
-                Schließen
-              </button>
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
+            {/* Search */}
+            <div className="flex gap-2 mb-2">
               <input
-                type="checkbox"
-                checked={smaOn}
-                onChange={(e) => setSmaOn(e.target.checked)}
+                type="text"
+                placeholder="Symbol suchen… (z. B. BTCUSDT)"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="flex-1 bg-[#1f242d] border border-[#2b3138] text-[#e6edf3] rounded-md px-2 py-2 text-sm"
               />
-              <label>SMA</label>
-              <input
-                type="number"
-                value={smaLen}
-                onChange={(e) => setSmaLen(Number(e.target.value))}
-                min="2"
-                step="1"
-                style={{
-                  width: '80px',
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  color: '#e6edf3',
-                  borderRadius: '6px',
-                  padding: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
-              <input
-                type="checkbox"
-                checked={maOn}
-                onChange={(e) => setMaOn(e.target.checked)}
-              />
-              <label>MA</label>
-              <input
-                type="number"
-                value={maLen}
-                onChange={(e) => setMaLen(Number(e.target.value))}
-                min="2"
-                step="1"
-                style={{
-                  width: '80px',
-                  background: '#1f242d',
-                  border: '1px solid #2b3138',
-                  color: '#e6edf3',
-                  borderRadius: '6px',
-                  padding: '6px',
-                  fontSize: '14px'
-                }}
-              />
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: '8px 0' }}>
               <button
                 onClick={() => {
-                  setShowIndicatorModal(false);
-                  updateChartData();
+                  setSearchTerm('');
+                  setTierFilter('all');
                 }}
-                style={{
-                  border: '1px solid #2f81f7',
-                  background: '#1f242d',
-                  color: '#e6edf3',
-                  padding: '8px 10px',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}
+                className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-3 py-2 rounded-md cursor-pointer text-sm hover:bg-[#2b3138]"
               >
-                Übernehmen
+                Reset
               </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      <style jsx>{`
-        @keyframes scroll {
-          from { transform: translateX(0); }
-          to { transform: translateX(-50%); }
-        }
-      `}</style>
-    </div>
+            {/* Tier Badges */}
+            <div className="flex gap-1.5 my-2">
+              {['all', '1', '2', '3'].map(tier => (
+                <span
+                  key={tier}
+                  onClick={() => setTierFilter(tier)}
+                  className={`text-xs rounded-full px-2 py-1 bg-[#1f242d] border cursor-pointer ${
+                    tierFilter === tier 
+                      ? 'text-[#e6edf3] border-[#2f81f7]' 
+                      : 'text-[#8b949e] border-[#2b3138] hover:text-[#e6edf3]'
+                  }`}
+                >
+                  {tier === 'all' ? 'Alle' : `Tier ${tier}`}
+                </span>
+              ))}
+            </div>
+
+            {/* Coin List */}
+            <div className="flex flex-col gap-1.5 mt-2">
+              {filteredUniverse.map(coin => (
+                <div
+                  key={coin.symbol}
+                  onClick={() => handleSymbolSelect(coin.symbol)}
+                  className={`flex justify-between items-center p-2 rounded-md cursor-pointer ${
+                    selectedSymbol === coin.symbol 
+                      ? 'bg-[#1f242d] outline outline-1 outline-[#2f81f7]' 
+                      : 'hover:bg-[#1f242d]'
+                  }`}
+                >
+                  <span className="font-mono text-xs">{coin.symbol}</span>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded ${getScoreClass(coin.score)}`}>
+                    {coin.score}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </aside>
+
+          {/* Center Panel - Chart & Controls */}
+          <section className="bg-[#161b22] flex flex-col">
+            {/* Tier Tabs */}
+            <div className="flex border-b border-[#2b3138]">
+              {[1, 2, 3].map(tier => (
+                <div
+                  key={tier}
+                  onClick={() => handleTierChange(tier)}
+                  className={`px-3.5 py-2.5 cursor-pointer font-semibold text-sm ${
+                    currentTier === tier 
+                      ? 'text-[#e6edf3] border-b-2 border-[#2f81f7]' 
+                      : 'text-[#8b949e] hover:text-[#e6edf3]'
+                  }`}
+                >
+                  TIER {tier} · {tier === 1 ? 'Quantum Screener' : tier === 2 ? 'Strategy Engine' : 'Deep Forecast'}
+                </div>
+              ))}
+              <div className="flex-1"></div>
+              <div
+                onClick={() => {
+                  if (currentTier < 3) {
+                    handleTierChange(currentTier + 1);
+                  }
+                }}
+                className={`px-3.5 py-2.5 cursor-pointer font-semibold text-sm ${
+                  currentTier < 3 ? 'text-[#8b949e] hover:text-[#e6edf3]' : 'text-[#4a4a4a] cursor-not-allowed'
+                }`}
+              >
+                Promote →
+              </div>
+            </div>
+
+            {/* Controls */}
+            <div className="flex gap-3 items-center px-3 py-2.5 border-b border-[#2b3138]">
+              <div className="border border-[#2f81f7] bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md text-sm">
+                {selectedSymbol}
+              </div>
+              <div className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md text-sm">
+                {selectedCoin ? formatPrice(selectedCoin.price) : '—'}
+              </div>
+              <div className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md text-sm">
+                Score: {selectedCoin?.score || '—'}
+              </div>
+              <div className="flex-1"></div>
+              
+              {/* Timeframe buttons */}
+              {['1m', '5m', '15m', '1h', '4h', '1d'].map(tf => (
+                <div
+                  key={tf}
+                  onClick={() => handleTimeframeChange(tf)}
+                  className={`border bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md cursor-pointer text-sm ${
+                    selectedTimeframe === tf ? 'border-[#2f81f7]' : 'border-[#2b3138] hover:border-[#2f81f7]'
+                  }`}
+                >
+                  {tf}
+                </div>
+              ))}
+              
+              <button
+                onClick={() => setShowIndicatorModal(true)}
+                className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md cursor-pointer text-sm hover:border-[#2f81f7]"
+              >
+                Indikatoren
+              </button>
+              
+              <button className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-1.5 rounded-md cursor-pointer text-sm hover:border-[#2f81f7]">
+                Chart-Screenshot
+              </button>
+            </div>
+
+            {/* Chart */}
+            <div className="relative flex-1 min-h-[320px]">
+              <div ref={chartRef} className="absolute inset-0"></div>
+              <div className="absolute left-3 top-3 bg-[rgba(13,17,23,0.8)] border border-[#2b3138] px-2.5 py-2 rounded-md text-xs">
+                {selectedSymbol} {selectedCoin ? formatPrice(selectedCoin.price) : '—'}
+              </div>
+            </div>
+
+            {/* Natural Language Block */}
+            <div className="border-t border-[#2b3138] p-3">
+              <div className="font-semibold mb-2">Natural Language Engine</div>
+              <div className="whitespace-pre-wrap bg-[#1f242d] border border-[#2b3138] rounded-lg p-2.5 min-h-[88px] text-sm">
+                {nlText}
+              </div>
+              <div className="flex gap-2 mt-2 flex-wrap">
+                <textarea
+                  value={nlPrompt}
+                  onChange={(e) => setNlPrompt(e.target.value)}
+                  placeholder="Nachricht oder Analyse schreiben…"
+                  className="flex-1 min-h-[70px] resize-y bg-[#1f242d] border border-[#2b3138] text-[#e6edf3] rounded-md p-2 text-sm"
+                />
+                <select
+                  value={nlModel}
+                  onChange={(e) => setNlModel(e.target.value)}
+                  className="bg-[#1f242d] border border-[#2b3138] text-[#e6edf3] rounded-md p-2 text-sm"
+                >
+                  <option value="local">local:default</option>
+                  <option value="anthropic:claude-sonnet-4-20250514">anthropic:claude-sonnet-4-20250514</option>
+                  <option value="anthropic:sonnet-4.1-1m">anthropic:sonnet-4.1-1m</option>
+                  <option value="openai:gpt-5-thinking">openai:gpt-5-thinking</option>
+                </select>
+                <button
+                  onClick={handleNLSend}
+                  className="border border-[#2f81f7] bg-[#1f242d] text-[#e6edf3] px-2.5 py-2 rounded-md cursor-pointer text-sm hover:bg-[#2b3138]"
+                >
+                  Senden
+                </button>
+                <button
+                  onClick={handleCopyNL}
+                  className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-2 rounded-md cursor-pointer text-sm hover:bg-[#2b3138]"
+                >
+                  Text kopieren
+                </button>
+                <button className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-2 rounded-md cursor-pointer text-sm hover:bg-[#2b3138]">
+                  An Telegram senden
+                </button>
+              </div>
+            </div>
+          </section>
+
+          {/* Right Panel - KPIs & Analysis */}
+          <aside className="bg-[#161b22] flex flex-col overflow-auto">
+            {/* Tier KPIs */}
+            <div className="border-b border-[#2b3138] p-3">
+              <div className="font-semibold my-2 text-sm">Tier-KPIs</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Signals (24h)</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.signals}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Win-Rate</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.winRate}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Avg PnL</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.avgPnL}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Latency</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.latency}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Strategy Scores */}
+            <div className="border-b border-[#2b3138] p-3">
+              <div className="font-semibold my-2 text-sm">Strategy-Scores</div>
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Grid</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.grid}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Daytrading</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.day}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Pattern</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.pattern}</div>
+                </div>
+                <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                  <div className="text-xs text-[#8b949e]">Regime</div>
+                  <div className="text-base font-bold mt-0.5">{kpis.regime}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tier 3 Forecast & Risk (only visible for Tier 3) */}
+            {currentTier === 3 && (
+              <div className="border-b border-[#2b3138] p-3">
+                <div className="font-semibold my-2 text-sm">Forecast & Risk</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                    <div className="text-xs text-[#8b949e]">1h / 1d Forecast</div>
+                    <div className="text-base font-bold mt-0.5">{kpis.f1}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                    <div className="text-xs text-[#8b949e]">4h / 7d Forecast</div>
+                    <div className="text-base font-bold mt-0.5">{kpis.f2}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                    <div className="text-xs text-[#8b949e]">VaR / CVaR</div>
+                    <div className="text-base font-bold mt-0.5">{kpis.var}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5">
+                    <div className="text-xs text-[#8b949e]">Sharpe</div>
+                    <div className="text-base font-bold mt-0.5">{kpis.sharpe}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Tier-specific Analysis */}
+            {currentTier === 1 && (
+              <div className="border-b border-[#2b3138] p-3">
+                <div className="font-semibold my-2 text-sm">Tier 1 - Quantum Screener Analysis</div>
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Whale Impact</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier1.whaleImpact}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Toxicity Score</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier1.toxicity}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Flow Direction</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier1.flowDir}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Volume Ratio</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier1.volumeRatio}</div>
+                  </div>
+                </div>
+
+                {/* Feature Importance */}
+                <div className="mt-3">
+                  <div className="font-semibold mt-3 mb-2 text-sm">LightGBM Feature Importance</div>
+                  {[
+                    { name: 'Whale Impact', value: 85 },
+                    { name: 'Liquidity', value: 78 },
+                    { name: 'Volatility', value: 65 },
+                    { name: 'Microstructure', value: 72 },
+                    { name: 'ALMA Slope', value: 68 },
+                    { name: 'Regime', value: 58 }
+                  ].map(feature => (
+                    <div key={feature.name} className="flex items-center mb-1.5">
+                      <span className="w-[120px] text-xs text-[#8b949e]">{feature.name}</span>
+                      <div className="relative flex-1 h-2 bg-[#1f242d] rounded-sm">
+                        <div 
+                          className="h-2 bg-[#2f81f7] rounded-sm"
+                          style={{ width: `${feature.value}%` }}
+                        ></div>
+                        <span className="absolute -right-8 text-[10px] text-[#8b949e] -top-0.5">
+                          {feature.value}%
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {currentTier === 2 && (
+              <div className="border-b border-[#2b3138] p-3">
+                <div className="font-semibold my-2 text-sm">Tier 2 - Strategy Engine Analysis</div>
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Pattern Confidence</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier2.patternConf}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Regime Detection</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier2.regime}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Strategy Fit</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier2.strategyFit}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Market Phase</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier2.marketPhase}</div>
+                  </div>
+                </div>
+
+                {/* Strategy Overview */}
+                <div className="mt-3">
+                  <div className="font-semibold mt-3 mb-2 text-sm">Strategy Overview</div>
+                  {[
+                    { name: 'Grid Trading', score: 82 },
+                    { name: 'Momentum', score: 76 },
+                    { name: 'Mean Reversion', score: 71 },
+                    { name: 'Breakout', score: 85 }
+                  ].map(strategy => (
+                    <div key={strategy.name} className="flex justify-between py-1.5 border-b border-[#2b3138] text-xs last:border-b-0">
+                      <span>{strategy.name}</span>
+                      <span>{strategy.score}/100</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {currentTier === 3 && (
+              <div className="border-b border-[#2b3138] p-3">
+                <div className="font-semibold my-2 text-sm">Tier 3 - Deep Forecast Analysis</div>
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">TFT Confidence</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier3.tftConf}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">N-BEATS Accuracy</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier3.nbeatsAcc}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Risk Score</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier3.riskScore}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2.5 text-xs">
+                    <div className="text-[#8b949e] mb-1">Position Size</div>
+                    <div className="font-semibold font-mono">{tierAnalysis.tier3.posSize}</div>
+                  </div>
+                </div>
+
+                {/* Forecast Visualization */}
+                <div className="mt-3">
+                  <div className="font-semibold mt-3 mb-2 text-sm">Forecast Visualization</div>
+                  {[
+                    { label: '1h', value: '+2.3%' },
+                    { label: '4h', value: '+5.1%' },
+                    { label: '1d', value: '+8.7%' },
+                    { label: '7d', value: '+15.2%' }
+                  ].map(forecast => (
+                    <div key={forecast.label} className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-[#8b949e]">{forecast.label}</span>
+                      <span className="font-mono text-xs font-semibold">
+                        {forecast.value}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Risk Meters */}
+                <div className="grid grid-cols-2 gap-2.5 mt-3">
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2 text-center">
+                    <div className="text-xs text-[#8b949e] mb-1">VaR</div>
+                    <div className="font-mono font-semibold">{tierAnalysis.tier3.var}</div>
+                  </div>
+                  <div className="bg-[#1f242d] border border-[#2b3138] rounded-md p-2 text-center">
+                    <div className="text-xs text-[#8b949e] mb-1">CVaR</div>
+                    <div className="font-mono font-semibold">{tierAnalysis.tier3.cvar}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </aside>
+        </div>
+
+        {/* Bottom Ticker */}
+        <footer className="flex gap-3 items-center px-3 py-2 bg-[#161b22] border-t border-[#2b3138] overflow-hidden h-[52px]">
+          <div className="flex gap-4 whitespace-nowrap animate-[scroll_30s_linear_infinite]">
+            {universe.slice(0, 20).map((coin, i) => {
+              const change = (Math.random() > 0.5 ? '+' : '-') + (Math.random() * 3.5).toFixed(1) + '%';
+              const tierColor = coin.tier === 1 ? 'text-[#3fb950]' : coin.tier === 2 ? 'text-[#a371f7]' : 'text-[#ff7b72]';
+              
+              return (
+                <span
+                  key={`${coin.symbol}-${i}`}
+                  className={`text-xs border border-[#2b3138] rounded-md px-1.5 py-0.5 ${tierColor}`}
+                >
+                  {coin.symbol} · {coin.score} · {change} · T{coin.tier}
+                </span>
+              );
+            })}
+          </div>
+        </footer>
+
+        {/* Indicator Modal */}
+        {showIndicatorModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+            <div className="bg-[#161b22] border border-[#2b3138] rounded-lg min-w-[320px] max-w-[90vw] p-3.5">
+              <div className="flex justify-between items-center mb-2.5">
+                <div className="font-semibold text-sm">Indikatoren</div>
+                <button
+                  onClick={() => setShowIndicatorModal(false)}
+                  className="border border-[#2b3138] bg-[#1f242d] text-[#e6edf3] px-2.5 py-2 rounded-md cursor-pointer text-sm"
+                >
+                  Schließen
+                </button>
+              </div>
+              
+              <div className="flex items-center gap-2 my-2">
+                <input
+                  type="checkbox"
+                  checked={smaOn}
+                  onChange={(e) => setSmaOn(e.target.checked)}
+                />
+                <label>SMA</label>
+                <input
+                  type="number"
+                  value={smaLen}
+                  onChange={(e) => setSmaLen(Number(e.target.value))}
+                  min="2"
+                  step="1"
+                  className="w-20 bg-[#1f242d] border border-[#2b3138] text-[#e6edf3] rounded-md px-1.5 py-1.5 text-sm"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2 my-2">
+                <input
+                  type="checkbox"
+                  checked={maOn}
+                  onChange={(e) => setMaOn(e.target.checked)}
+                />
+                <label>MA</label>
+                <input
+                  type="number"
+                  value={maLen}
+                  onChange={(e) => setMaLen(Number(e.target.value))}
+                  min="2"
+                  step="1"
+                  className="w-20 bg-[#1f242d] border border-[#2b3138] text-[#e6edf3] rounded-md px-1.5 py-1.5 text-sm"
+                />
+              </div>
+              
+              <div className="flex items-center gap-2 my-2">
+                <button
+                  onClick={() => {
+                    setShowIndicatorModal(false);
+                    updateChartData();
+                  }}
+                  className="border border-[#2f81f7] bg-[#1f242d] text-[#e6edf3] px-2.5 py-2 rounded-md cursor-pointer text-sm"
+                >
+                  Übernehmen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <style jsx>{`
+          @keyframes scroll {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+          }
+        `}</style>
+      </div>
+    </ThemeProvider>
   );
 };
 
