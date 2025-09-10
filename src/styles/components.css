@@ -1,6 +1,6 @@
 /* Component-specific styles für Ultra-Low-Latency Trading Interface */
 
-/* Trading Components */
+/* Trading Components  */
 .price-positive {
   @apply text-green-500;
 }
