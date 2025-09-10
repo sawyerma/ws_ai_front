@@ -1,12 +1,11 @@
 /**
  * Global Performance Hook
- * Extrahiert die Performance-Logik aus PerformanceDashboard für globale Verwendung
+ * Integriert mit PerformanceMetricsService für Ultra-Low-Latency Monitoring
  * Enterprise-grade Monitoring mit <5ms SLA-Compliance
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { UltraFastParser } from '../../lib/ultraFastParsing';
-import { DirectDOMUpdater } from '../../lib/directDOMUpdater';
+import { performanceMetrics, PerformanceMetrics as NewPerformanceMetrics } from '../../services/performanceMetrics';
 
 interface PerformanceMetrics {
   frontendLatency: number;
@@ -113,26 +112,10 @@ export const useGlobalPerformance = () => {
   }, []);
 
   /**
-   * Frontend Performance-Metriken sammeln
+   * Frontend Performance-Metriken von PerformanceMetricsService sammeln
    */
   const collectFrontendMetrics = useCallback(() => {
-    // Parser Performance
-    const parseStats = UltraFastParser.getPerformanceStats();
-    
-    // DOM Update Performance
-    const domStats = DirectDOMUpdater.getPerformanceStats();
-    
-    // Browser Performance API
-    const performanceEntries = performance.getEntriesByType('measure');
-    
-    // Frontend Latenz (durchschnittlich aus letzten 10 Measurements)
-    const recentMeasures = performanceEntries
-      .filter(entry => entry.name.includes('frontend') || entry.name.includes('update'))
-      .slice(-10);
-    
-    const frontendLatency = recentMeasures.length > 0
-      ? recentMeasures.reduce((sum, entry) => sum + entry.duration, 0) / recentMeasures.length
-      : 0;
+    const serviceMetrics = performanceMetrics.getMetrics();
     
     // Memory Usage (wenn verfügbar)
     let memoryUsage = 0;
@@ -142,10 +125,11 @@ export const useGlobalPerformance = () => {
     }
     
     return {
-      frontendLatency,
-      parseTime: parseStats.averageParseTime,
-      domUpdateTime: domStats.averageUpdateTime,
-      memoryUsage
+      frontendLatency: serviceMetrics.totalFrontendLatency,
+      parseTime: serviceMetrics.jsonParseLatency,
+      domUpdateTime: serviceMetrics.domUpdateLatency,
+      memoryUsage,
+      serviceMetrics // Pass through the full service metrics
     };
   }, []);
 
@@ -161,12 +145,12 @@ export const useGlobalPerformance = () => {
   }, [alertThreshold]);
 
   /**
-   * Metrics aktualisieren
+   * Metrics aktualisieren - Integriert mit PerformanceMetricsService
    */
   const updateMetrics = useCallback(async () => {
     const startTime = performance.now();
     
-    // Frontend Metriken sammeln
+    // Frontend Metriken von Service sammeln
     const frontendMetrics = collectFrontendMetrics();
     
     // Backend Metriken abrufen
@@ -184,17 +168,20 @@ export const useGlobalPerformance = () => {
     setHistoricalData(prev => {
       const updated = [...prev, newDataPoint].slice(-200); // Letzte 200 Punkte behalten
       
-      // SLA Compliance berechnen
-      const compliance = calculateSLACompliance(frontendMetrics.frontendLatency, updated);
+      // SLA Compliance von PerformanceMetricsService verwenden (bereits korrekt berechnet)
+      const serviceCompliance = frontendMetrics.serviceMetrics?.slaCompliance || 100;
       
-      // Metriken aktualisieren
+      // Metriken aktualisieren - Nutze echte Ultra-Low-Latency Daten
       setMetrics({
-        ...frontendMetrics,
+        frontendLatency: frontendMetrics.frontendLatency,
+        parseTime: frontendMetrics.parseTime,
+        domUpdateTime: frontendMetrics.domUpdateTime,
+        memoryUsage: frontendMetrics.memoryUsage,
         backendConnections: backendMetrics.backendConnections,
-        messagesPerSecond: backendMetrics.messagesPerSecond,
-        websocketLatency: backendMetrics.websocketLatency,
-        fastApiLatency: backendMetrics.fastApiLatency,
-        slaCompliance: Math.min(compliance, backendMetrics.backendSlaCompliance),
+        messagesPerSecond: frontendMetrics.serviceMetrics?.messagesPerSecond || backendMetrics.messagesPerSecond,
+        websocketLatency: frontendMetrics.serviceMetrics?.webSocketLatency || backendMetrics.websocketLatency,
+        fastApiLatency: frontendMetrics.serviceMetrics?.fastApiLatency || backendMetrics.fastApiLatency,
+        slaCompliance: Math.min(serviceCompliance, backendMetrics.backendSlaCompliance),
         cpuUsage: measurementLatency < 1 ? 5 : measurementLatency * 2, // Geschätzte CPU-Last
         lastUpdate: Date.now()
       });
@@ -204,7 +191,7 @@ export const useGlobalPerformance = () => {
   }, [collectFrontendMetrics, fetchBackendMetrics, calculateSLACompliance]);
 
   /**
-   * Performance Recording starten/stoppen
+   * Performance Recording starten/stoppen - Integriert mit PerformanceMetricsService
    */
   const toggleRecording = useCallback(() => {
     if (isRecording) {
@@ -217,24 +204,51 @@ export const useGlobalPerformance = () => {
       // Performance-Messung starten
       performance.mark('performance-recording-start');
       
-      // Parser und DOM Stats zurücksetzen
-      UltraFastParser.resetPerformanceStats();
-      DirectDOMUpdater.resetPerformanceStats();
+      // Clear performance measures for fresh recording
+      if (performance.clearMeasures) {
+        performance.clearMeasures();
+      }
+      if (performance.clearMarks) {
+        performance.clearMarks();
+      }
     }
   }, [isRecording]);
 
   /**
-   * Performance-Report exportieren
+   * Performance-Report exportieren - Integriert mit PerformanceMetricsService
    */
   const exportPerformanceReport = useCallback(() => {
+    const serviceMetrics = performanceMetrics.getMetrics();
+    const serviceHistory = performanceMetrics.getHistory();
+    
     const report = {
       timestamp: new Date().toISOString(),
+      version: '2.0-UltraLowLatency',
       currentMetrics: metrics,
+      serviceMetrics: serviceMetrics,
       historicalData: historicalData,
-      parserStats: UltraFastParser.getPerformanceStats(),
-      domStats: DirectDOMUpdater.getPerformanceStats(),
+      serviceHistory: serviceHistory,
+      ultraLowLatencyComponents: {
+        jsonParser: {
+          averageParseTime: serviceMetrics.jsonParseLatency,
+          description: 'Ultra-Fast JSON Parser with RegEx optimization'
+        },
+        domUpdater: {
+          averageUpdateTime: serviceMetrics.domUpdateLatency,
+          description: 'Direct DOM manipulation bypassing React reconciliation'
+        },
+        webSocket: {
+          latency: serviceMetrics.webSocketLatency,
+          description: 'Ultra-Low-Latency WebSocket with binary message parsing'
+        },
+        webWorker: {
+          processingTime: serviceMetrics.workerProcessingLatency,
+          description: 'Parallel processing with Web Worker for market data calculations'
+        }
+      },
       slaThreshold: alertThreshold,
-      slaCompliance: metrics.slaCompliance
+      slaCompliance: serviceMetrics.slaCompliance,
+      systemStatus: serviceMetrics.systemStatus
     };
     
     const blob = new Blob([JSON.stringify(report, null, 2)], { 
@@ -244,16 +258,17 @@ export const useGlobalPerformance = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `performance-report-${Date.now()}.json`;
+    a.download = `ultra-low-latency-report-${Date.now()}.json`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }, [metrics, historicalData, alertThreshold]);
 
-  // Automatische Aktualisierung
+  // Automatische Aktualisierung - Höhere Frequenz für Ultra-Low-Latency
   useEffect(() => {
-    const interval = setInterval(updateMetrics, 1000); // Jede Sekunde
+    // Update every 250ms for ultra-responsive monitoring
+    const interval = setInterval(updateMetrics, 250);
     
     // Initial update
     updateMetrics();

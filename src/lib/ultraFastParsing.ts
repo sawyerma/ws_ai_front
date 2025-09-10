@@ -44,12 +44,12 @@ export class UltraFastParser {
         const volumeMatch = this.volumeRegex.exec(data);
 
         const result: TradingMessage = {
-          price: parseFloat(priceMatch[1]),
-          symbol: symbolMatch[1],
+          price: parseFloat(priceMatch[1]!),
+          symbol: symbolMatch[1]!,
           timestamp: Date.now(),
-          type: typeMatch ? typeMatch[1] : undefined,
-          change: changeMatch ? parseFloat(changeMatch[1]) : undefined,
-          volume: volumeMatch ? parseFloat(volumeMatch[1]) : undefined
+          type: typeMatch?.[1],
+          change: changeMatch ? parseFloat(changeMatch[1]!) : undefined,
+          volume: volumeMatch ? parseFloat(volumeMatch[1]!) : undefined
         };
 
         // Performance measurement
