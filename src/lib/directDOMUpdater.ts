@@ -1,404 +1,227 @@
 /**
- * Direct DOM Updater - Ultra-Low-Latency (8-15ms → 1ms)
- * Umgeht React Reconciliation für kritische Trading-Updates
- * 
- * Performance-Ziel: 90% Latenz-Reduktion durch direkte DOM-Manipulation
+ * Direct DOM Updates for Ultra-Low-Latency Trading
+ * Bypasses React reconciliation for critical price updates
+ * Performance: 8-15ms → 1ms (90% improvement)
  */
 
-export interface OrderBookEntry {
+interface OrderBookEntry {
   price: number;
   size: number;
   total: number;
   side: 'buy' | 'sell';
 }
 
-export interface PriceUpdate {
-  symbol: string;
-  price: number;
-  change: number;
-  volume?: number;
-}
-
 export class DirectDOMUpdater {
-  // Cache für DOM-Elemente (verhindert wiederholte querySelector-Aufrufe)
   private static priceElements = new Map<string, HTMLElement>();
   private static changeElements = new Map<string, HTMLElement>();
   private static volumeElements = new Map<string, HTMLElement>();
   private static orderBookContainers = new Map<string, HTMLElement>();
-  
-  // Performance-Metriken
-  private static updateCount = 0;
-  private static totalUpdateTime = 0;
-  
+
   /**
-   * Ultra-schnelle Preis-Updates ohne React State
-   * 90% schneller als setState() + Re-render
+   * Direkte DOM-Updates ohne React State
+   * Umgeht komplette React Reconciliation
    */
-  static updatePriceDirectly(symbol: string, price: number, change: number, volume?: number) {
+  static updatePriceDirectly(symbol: string, price: number, change?: number): void {
     const startTime = performance.now();
-    
-    try {
-      // Price Element Update
-      const priceEl = this.getPriceElement(symbol);
-      if (priceEl) {
-        priceEl.textContent = this.formatPrice(price);
-        
-        // Price Animation für visuelle Feedback
-        this.animatePriceChange(priceEl, change >= 0);
+
+    // Cache DOM elements für wiederholte Updates
+    let priceEl = this.priceElements.get(symbol);
+    if (!priceEl) {
+      const element = document.getElementById(`price-${symbol}`);
+      if (element) {
+        priceEl = element;
+        this.priceElements.set(symbol, element);
       }
-      
-      // Change Element Update  
-      const changeEl = this.getChangeElement(symbol);
-      if (changeEl) {
-        const formattedChange = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
-        changeEl.textContent = formattedChange;
-        
-        // Dynamic CSS Classes für Farben
-        changeEl.className = this.getPriceChangeClasses(change);
-      }
-      
-      // Volume Element Update (optional)
-      if (volume !== undefined) {
-        const volumeEl = this.getVolumeElement(symbol);
-        if (volumeEl) {
-          volumeEl.textContent = this.formatVolume(volume);
-        }
-      }
-      
-      this.updatePerformanceMetrics(performance.now() - startTime);
-      
-    } catch (error) {
-      console.error('[DirectDOMUpdater] Price update error:', error);
     }
-  }
-  
-  /**
-   * Bulk OrderBook Updates mit Document Fragments
-   * Atomic DOM-Updates für beste Performance
-   */
-  static updateOrderBookDirectly(symbol: string, orders: OrderBookEntry[]) {
-    const startTime = performance.now();
-    
-    try {
-      const container = this.getOrderBookContainer(symbol);
-      if (!container) return;
-      
-      // Document Fragment für atomic Updates
-      const fragment = document.createDocumentFragment();
-      
-      // Bids und Asks getrennt verarbeiten
-      const bids = orders.filter(o => o.side === 'buy').slice(0, 10);
-      const asks = orders.filter(o => o.side === 'sell').slice(0, 10);
-      
-      // Bids Section
-      const bidsSection = this.createOrderBookSection('Bids', bids, 'buy');
-      fragment.appendChild(bidsSection);
-      
-      // Asks Section  
-      const asksSection = this.createOrderBookSection('Asks', asks, 'sell');
-      fragment.appendChild(asksSection);
-      
-      // Atomic Replace - minimiert Reflow/Repaint
-      container.replaceChildren(fragment);
-      
-      this.updatePerformanceMetrics(performance.now() - startTime);
-      
-    } catch (error) {
-      console.error('[DirectDOMUpdater] OrderBook update error:', error);
+
+    let changeEl = this.changeElements.get(symbol);
+    if (!changeEl) {
+      const element = document.getElementById(`change-${symbol}`);
+      if (element) {
+        changeEl = element;
+        this.changeElements.set(symbol, element);
+      }
     }
-  }
-  
-  /**
-   * Bulk Price Updates für mehrere Symbole
-   * Optimiert für Streaming-Updates von Exchange
-   */
-  static updateMultiplePricesDirectly(updates: PriceUpdate[]) {
-    const startTime = performance.now();
-    
-    // Batch DOM-Updates für bessere Performance
-    performance.mark('bulk-update-start');
-    
-    updates.forEach(update => {
-      this.updatePriceDirectly(
-        update.symbol, 
-        update.price, 
-        update.change, 
-        update.volume
-      );
+
+    // Atomic DOM Updates
+    if (priceEl) {
+      priceEl.textContent = price.toFixed(2);
+      
+      // Price direction indicator
+      if (change !== undefined) {
+        priceEl.className = `price-value ${change >= 0 ? 'price-up' : 'price-down'}`;
+      }
+    }
+
+    if (changeEl && change !== undefined) {
+      changeEl.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+      changeEl.className = `price-change ${change >= 0 ? 'positive text-green-500' : 'negative text-red-500'}`;
+    }
+
+    // Performance tracking
+    const endTime = performance.now();
+    performance.measure('direct-dom-update', {
+      start: startTime,
+      end: endTime
     });
-    
-    performance.mark('bulk-update-end');
-    performance.measure('bulk-update', 'bulk-update-start', 'bulk-update-end');
-    
-    this.updatePerformanceMetrics(performance.now() - startTime);
   }
-  
+
   /**
-   * Price Element aus Cache oder DOM abrufen
+   * Bulk Updates für OrderBook (mehrere Zeilen gleichzeitig)
+   * Verwendet DocumentFragment für atomare Updates
    */
-  private static getPriceElement(symbol: string): HTMLElement | null {
-    const cached = this.priceElements.get(symbol);
-    if (cached && cached.isConnected) {
-      return cached;
+  static updateOrderBookDirectly(symbol: string, orders: OrderBookEntry[]): void {
+    const startTime = performance.now();
+
+    let container = this.orderBookContainers.get(symbol);
+    if (!container) {
+      const element = document.getElementById(`orderbook-${symbol}`);
+      if (element) {
+        container = element;
+        this.orderBookContainers.set(symbol, element);
+      }
     }
+
+    if (!container) return;
+
+    // DocumentFragment für atomare Updates
+    const fragment = document.createDocumentFragment();
     
-    const element = document.getElementById(`price-${symbol}`) || 
-                   document.querySelector(`[data-price-symbol="${symbol}"]`);
-    
-    if (element) {
-      this.priceElements.set(symbol, element);
-    }
-    
-    return element;
-  }
-  
-  /**
-   * Change Element aus Cache oder DOM abrufen
-   */
-  private static getChangeElement(symbol: string): HTMLElement | null {
-    const cached = this.changeElements.get(symbol);
-    if (cached && cached.isConnected) {
-      return cached;
-    }
-    
-    const element = document.getElementById(`change-${symbol}`) || 
-                   document.querySelector(`[data-change-symbol="${symbol}"]`);
-    
-    if (element) {
-      this.changeElements.set(symbol, element);
-    }
-    
-    return element;
-  }
-  
-  /**
-   * Volume Element aus Cache oder DOM abrufen
-   */
-  private static getVolumeElement(symbol: string): HTMLElement | null {
-    const cached = this.volumeElements.get(symbol);
-    if (cached && cached.isConnected) {
-      return cached;
-    }
-    
-    const element = document.getElementById(`volume-${symbol}`) || 
-                   document.querySelector(`[data-volume-symbol="${symbol}"]`);
-    
-    if (element) {
-      this.volumeElements.set(symbol, element);
-    }
-    
-    return element;
-  }
-  
-  /**
-   * OrderBook Container aus Cache oder DOM abrufen
-   */
-  private static getOrderBookContainer(symbol: string): HTMLElement | null {
-    const cached = this.orderBookContainers.get(symbol);
-    if (cached && cached.isConnected) {
-      return cached;
-    }
-    
-    const element = document.getElementById(`orderbook-${symbol}`) || 
-                   document.querySelector(`[data-orderbook-symbol="${symbol}"]`);
-    
-    if (element) {
-      this.orderBookContainers.set(symbol, element);
-    }
-    
-    return element;
-  }
-  
-  /**
-   * OrderBook Section erstellen
-   */
-  private static createOrderBookSection(
-    title: string, 
-    orders: OrderBookEntry[], 
-    side: 'buy' | 'sell'
-  ): HTMLElement {
-    const section = document.createElement('div');
-    section.className = `orderbook-section orderbook-${side} bg-card border-border`;
-    
-    // Header
-    const header = document.createElement('div');
-    header.className = 'orderbook-header text-muted-foreground text-sm font-medium p-2';
-    header.textContent = title;
-    section.appendChild(header);
-    
-    // Orders Table
-    const table = document.createElement('div');
-    table.className = 'orderbook-table';
-    
-    orders.forEach(order => {
-      const row = document.createElement('div');
-      row.className = `orderbook-row flex justify-between items-center p-1 text-sm hover:bg-muted`;
-      
+    // Separate buy/sell orders für bessere Performance
+    const buyOrders = orders.filter(order => order.side === 'buy').slice(0, 20);
+    const sellOrders = orders.filter(order => order.side === 'sell').slice(0, 20);
+
+    // Build buy orders
+    buyOrders.forEach(order => {
+      const row = document.createElement('tr');
+      row.className = 'orderbook-row hover:bg-muted/50';
       row.innerHTML = `
-        <span class="price text-foreground font-mono ${
-          side === 'buy' ? 'text-green-500' : 'text-red-500'
-        }">${this.formatPrice(order.price)}</span>
-        <span class="size text-muted-foreground font-mono">${this.formatVolume(order.size)}</span>
-        <span class="total text-muted-foreground font-mono">${this.formatVolume(order.total)}</span>
+        <td class="text-right font-mono text-sm text-green-500">${order.price.toFixed(2)}</td>
+        <td class="text-right font-mono text-sm text-muted-foreground">${order.size.toFixed(4)}</td>
+        <td class="text-right font-mono text-sm text-muted-foreground">${order.total.toFixed(2)}</td>
       `;
-      
-      table.appendChild(row);
+      fragment.appendChild(row);
     });
-    
-    section.appendChild(table);
-    return section;
+
+    // Add separator
+    const separator = document.createElement('tr');
+    separator.innerHTML = '<td colspan="3" class="border-t border-border h-2"></td>';
+    fragment.appendChild(separator);
+
+    // Build sell orders
+    sellOrders.forEach(order => {
+      const row = document.createElement('tr');
+      row.className = 'orderbook-row hover:bg-muted/50';
+      row.innerHTML = `
+        <td class="text-right font-mono text-sm text-red-500">${order.price.toFixed(2)}</td>
+        <td class="text-right font-mono text-sm text-muted-foreground">${order.size.toFixed(4)}</td>
+        <td class="text-right font-mono text-sm text-muted-foreground">${order.total.toFixed(2)}</td>
+      `;
+      fragment.appendChild(row);
+    });
+
+    // Single atomic DOM replacement
+    container.replaceChildren(fragment);
+
+    const endTime = performance.now();
+    performance.measure('orderbook-update', {
+      start: startTime,
+      end: endTime
+    });
   }
-  
+
   /**
-   * Preis formatieren mit optimaler Performance
+   * Volume-Updates mit visueller Indikation
    */
-  private static formatPrice(price: number): string {
-    // Optimierte Formatierung ohne toLocaleString() (zu langsam)
-    if (price >= 1000) {
-      return price.toFixed(2);
-    } else if (price >= 1) {
-      return price.toFixed(4);
-    } else {
-      return price.toFixed(8);
+  static updateVolumeDirectly(symbol: string, volume: number, volumeChange?: number): void {
+    let volumeEl = this.volumeElements.get(symbol);
+    if (!volumeEl) {
+      const element = document.getElementById(`volume-${symbol}`);
+      if (element) {
+        volumeEl = element;
+        this.volumeElements.set(symbol, element);
+      }
+    }
+
+    if (volumeEl) {
+      const formattedVolume = volume > 1000000 
+        ? `${(volume / 1000000).toFixed(1)}M`
+        : volume > 1000 
+          ? `${(volume / 1000).toFixed(1)}K`
+          : volume.toFixed(0);
+
+      volumeEl.textContent = formattedVolume;
+
+      // Volume spike indicator
+      if (volumeChange && volumeChange > 20) {
+        volumeEl.className = 'volume-spike text-yellow-500 animate-pulse';
+        // Remove animation after 1 second
+        setTimeout(() => {
+          volumeEl!.className = 'volume-normal text-muted-foreground';
+        }, 1000);
+      }
     }
   }
-  
+
   /**
-   * Volume formatieren mit K/M/B Suffixen
+   * Batch-Update für mehrere Symbole gleichzeitig
    */
-  private static formatVolume(volume: number): string {
-    if (volume >= 1000000000) {
-      return (volume / 1000000000).toFixed(1) + 'B';
-    } else if (volume >= 1000000) {
-      return (volume / 1000000).toFixed(1) + 'M';
-    } else if (volume >= 1000) {
-      return (volume / 1000).toFixed(1) + 'K';
-    }
-    return volume.toFixed(2);
+  static batchUpdatePrices(updates: Array<{
+    symbol: string;
+    price: number;
+    change?: number;
+    volume?: number;
+  }>): void {
+    const startTime = performance.now();
+
+    // Process all updates in single frame
+    requestAnimationFrame(() => {
+      updates.forEach(({ symbol, price, change, volume }) => {
+        this.updatePriceDirectly(symbol, price, change);
+        if (volume) {
+          this.updateVolumeDirectly(symbol, volume);
+        }
+      });
+    });
+
+    const endTime = performance.now();
+    performance.measure('batch-price-update', {
+      start: startTime,
+      end: endTime
+    });
   }
-  
+
   /**
-   * CSS Classes für Price Changes (Semantic Classes)
+   * Cache löschen (für Memory Management)
    */
-  private static getPriceChangeClasses(change: number): string {
-    const baseClasses = 'price-change ml-2 font-mono text-sm';
-    
-    if (change > 0) {
-      return `${baseClasses} text-green-500 positive`;
-    } else if (change < 0) {
-      return `${baseClasses} text-red-500 negative`;
-    }
-    
-    return `${baseClasses} text-muted-foreground neutral`;
-  }
-  
-  /**
-   * Price Change Animation
-   */
-  private static animatePriceChange(element: HTMLElement, isPositive: boolean) {
-    // Kurze CSS-Animation für visuelles Feedback
-    const animationClass = isPositive ? 'price-flash-green' : 'price-flash-red';
-    
-    element.classList.add(animationClass);
-    
-    // Animation nach 500ms entfernen
-    setTimeout(() => {
-      element.classList.remove(animationClass);
-    }, 500);
-  }
-  
-  /**
-   * Performance-Metriken aktualisieren
-   */
-  private static updatePerformanceMetrics(updateTime: number) {
-    this.updateCount++;
-    this.totalUpdateTime += updateTime;
-  }
-  
-  /**
-   * Performance-Statistiken abrufen
-   */
-  static getPerformanceStats() {
-    const averageUpdateTime = this.updateCount > 0 ? 
-                            this.totalUpdateTime / this.updateCount : 0;
-    
-    return {
-      totalUpdates: this.updateCount,
-      averageUpdateTime,
-      totalUpdateTime: this.totalUpdateTime,
-      cacheHitRate: this.calculateCacheHitRate()
-    };
-  }
-  
-  /**
-   * Cache Hit Rate berechnen
-   */
-  private static calculateCacheHitRate(): number {
-    const totalElements = this.priceElements.size + 
-                         this.changeElements.size + 
-                         this.volumeElements.size;
-    
-    return totalElements > 0 ? (totalElements / Math.max(this.updateCount, 1)) * 100 : 0;
-  }
-  
-  /**
-   * Cache leeren (für Memory Management)
-   */
-  static clearCache() {
+  static clearCache(): void {
     this.priceElements.clear();
     this.changeElements.clear();
     this.volumeElements.clear();
     this.orderBookContainers.clear();
   }
-  
+
   /**
-   * Performance-Statistiken zurücksetzen
+   * Performance-Metriken für DOM Updates
    */
-  static resetPerformanceStats() {
-    this.updateCount = 0;
-    this.totalUpdateTime = 0;
-  }
-  
-  /**
-   * Bulk Element Registration für bessere Performance
-   * Kann beim App-Start aufgerufen werden
-   */
-  static registerElements(symbols: string[]) {
-    symbols.forEach(symbol => {
-      this.getPriceElement(symbol);
-      this.getChangeElement(symbol);
-      this.getVolumeElement(symbol);
-      this.getOrderBookContainer(symbol);
-    });
+  static getDOMUpdateMetrics() {
+    const priceUpdates = performance.getEntriesByName('direct-dom-update');
+    const orderbookUpdates = performance.getEntriesByName('orderbook-update');
+    const batchUpdates = performance.getEntriesByName('batch-price-update');
+
+    return {
+      averagePriceUpdateTime: priceUpdates.length > 0
+        ? priceUpdates.reduce((sum, entry) => sum + entry.duration, 0) / priceUpdates.length
+        : 0,
+      averageOrderbookUpdateTime: orderbookUpdates.length > 0
+        ? orderbookUpdates.reduce((sum, entry) => sum + entry.duration, 0) / orderbookUpdates.length
+        : 0,
+      averageBatchUpdateTime: batchUpdates.length > 0
+        ? batchUpdates.reduce((sum, entry) => sum + entry.duration, 0) / batchUpdates.length
+        : 0,
+      totalPriceUpdates: priceUpdates.length,
+      totalOrderbookUpdates: orderbookUpdates.length,
+      lastUpdateTime: priceUpdates.length > 0 ? priceUpdates[priceUpdates.length - 1]?.duration || 0 : 0
+    };
   }
 }
-
-// CSS Animations für Price Flashes
-const priceAnimationStyles = `
-  @keyframes priceFlashGreen {
-    0% { background-color: rgba(34, 197, 94, 0.3); }
-    100% { background-color: transparent; }
-  }
-  
-  @keyframes priceFlashRed {
-    0% { background-color: rgba(239, 68, 68, 0.3); }
-    100% { background-color: transparent; }
-  }
-  
-  .price-flash-green {
-    animation: priceFlashGreen 0.5s ease-out;
-  }
-  
-  .price-flash-red {
-    animation: priceFlashRed 0.5s ease-out;
-  }
-`;
-
-// Styles automatisch hinzufügen
-if (typeof document !== 'undefined') {
-  const styleSheet = document.createElement('style');
-  styleSheet.textContent = priceAnimationStyles;
-  document.head.appendChild(styleSheet);
-}
-
-export { DirectDOMUpdater as default };
