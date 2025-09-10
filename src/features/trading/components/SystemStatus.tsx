@@ -1,94 +1,60 @@
-import React, { useState, useEffect } from 'react';
-import { performanceMetrics, PerformanceMetrics } from '../../../services/performanceMetrics';
+import React from 'react';
+import { useGlobalPerformance } from '../../../shared/hooks/useGlobalPerformance';
 
 const SystemStatus: React.FC = () => {
-  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
-  const [connectionStatus, setConnectionStatus] = useState<'stable' | 'unstable'>('stable');
+  const { metrics, isBackendOnline, getAmpelStatus } = useGlobalPerformance();
 
-  // Subscribe to real performance metrics
-  useEffect(() => {
-    // Get initial metrics
-    setMetrics(performanceMetrics.getMetrics());
-    
-    // Subscribe to updates
-    const unsubscribe = performanceMetrics.subscribe((newMetrics: PerformanceMetrics) => {
-      setMetrics(newMetrics);
-      
-      // Update connection status based on system health
-      setConnectionStatus(newMetrics.systemStatus === 'OPTIMAL' || newMetrics.systemStatus === 'STABLE' ? 'stable' : 'unstable');
-    });
+  // Get ampel status with proper thresholds
+  const ampelStatus = getAmpelStatus();
+  const backendStatus = isBackendOnline ? 'online' : 'offline';
 
-    return unsubscribe;
-  }, []);
-
-  if (!metrics) {
-    return (
-      <div className="fixed bottom-4 right-4 flex items-center gap-3 text-xs">
-        <div className="flex items-center gap-1">
-          <div className="w-2 h-2 rounded-full bg-yellow-500 animate-pulse"></div>
-          <span className="text-yellow-500 font-medium">Initializing performance monitoring...</span>
-        </div>
-      </div>
-    );
-  }
-
-  // Determine status colors based on performance
-  const getLatencyColor = (latency: number, threshold: number = 2.0) => {
-    if (latency <= threshold) return 'text-green-500';
-    if (latency <= threshold * 2) return 'text-yellow-500';
-    return 'text-red-500';
+  // Helper function to get status class based on latency
+  const getStatusClass = (latency: number) => {
+    if (latency < 5) return 'text-[hsl(var(--status-success))]';
+    if (latency <= 39) return 'text-[hsl(var(--status-warning))]';
+    return 'text-[hsl(var(--status-error))]';
   };
 
-  const slaStatusColor = metrics.slaStatus === 'ACHIEVED' ? 'text-green-500' :
-                        metrics.slaStatus === 'WARNING' ? 'text-yellow-500' : 'text-red-500';
+  // Helper function to get ampel background class
+  const getAmpelClass = (status: string) => {
+    switch (status) {
+      case 'GRÜN': return 'bg-[hsl(var(--status-success))]';
+      case 'ORANGE': return 'bg-[hsl(var(--status-warning))]';
+      case 'ROT': return 'bg-[hsl(var(--status-error))]';
+      default: return 'bg-[hsl(var(--status-success))]';
+    }
+  };
 
   return (
-    <div className="fixed bottom-4 right-4 flex items-center gap-3 text-xs">
-      {/* SLA Compliance Status */}
+    <div className="fixed bottom-4 right-4 flex items-center gap-3 text-xs font-mono">
       <div className="flex items-center gap-1">
-        <div className={`w-2 h-2 rounded-full ${connectionStatus === 'stable' ? 'bg-green-500' : 'bg-red-500'}`}></div>
-        <span className={`font-medium ${slaStatusColor}`}>
-          SLA: {metrics.slaCompliance.toFixed(1)}% ({metrics.slaStatus})
+        {/* AMPEL-SYSTEM: Verwendet globale CSS-Variablen */}
+        <div className={`w-2 h-2 rounded-full ${getAmpelClass(ampelStatus.status)}`}></div>
+        <span className="text-[hsl(var(--status-success))] font-medium">System connection {backendStatus}</span>
+      </div>
+      
+      <div className="flex items-center gap-1">
+        <span className="text-muted-foreground">FastAPI =</span>
+        <span className={`font-medium w-12 text-right ${
+          backendStatus === 'online' ? getStatusClass(metrics.fastApiLatency) : 'text-muted-foreground'
+        }`}>
+          {backendStatus === 'online' ? `${metrics.fastApiLatency.toFixed(1)}ms` : 'N/A'}
         </span>
       </div>
       
-      {/* FastAPI Latency */}
       <div className="flex items-center gap-1">
-        <span className="text-text-secondary">FastAPI =</span>
-        <span className={`font-medium ${getLatencyColor(metrics.fastApiLatency)}`}>
-          {metrics.fastApiLatency.toFixed(2)}ms
+        <span className="text-muted-foreground">WS =</span>
+        <span className={`font-medium w-12 text-right ${
+          backendStatus === 'online' ? getStatusClass(metrics.websocketLatency) : 'text-muted-foreground'
+        }`}>
+          {backendStatus === 'online' ? `${metrics.websocketLatency.toFixed(1)}ms` : 'N/A'}
         </span>
       </div>
       
-      {/* WebSocket Latency */}
       <div className="flex items-center gap-1">
-        <span className="text-text-secondary">WS =</span>
-        <span className={`font-medium ${getLatencyColor(metrics.webSocketLatency)}`}>
-          {metrics.webSocketLatency.toFixed(2)}ms
-        </span>
-      </div>
-
-      {/* JSON Parse Performance */}
-      <div className="flex items-center gap-1">
-        <span className="text-text-secondary">Parse =</span>
-        <span className={`font-medium ${getLatencyColor(metrics.jsonParseLatency, 0.5)}`}>
-          {metrics.jsonParseLatency.toFixed(3)}ms
-        </span>
-      </div>
-
-      {/* DOM Update Performance */}
-      <div className="flex items-center gap-1">
-        <span className="text-text-secondary">DOM =</span>
-        <span className={`font-medium ${getLatencyColor(metrics.domUpdateLatency, 1.0)}`}>
-          {metrics.domUpdateLatency.toFixed(3)}ms
-        </span>
-      </div>
-
-      {/* Messages per Second */}
-      <div className="flex items-center gap-1">
-        <span className="text-text-secondary">Msg/s =</span>
-        <span className="text-blue-500 font-medium">
-          {Math.round(metrics.messagesPerSecond)}
+        <span className="text-muted-foreground">GUI =</span>
+        <span className={`font-medium w-12 text-right ${getStatusClass(metrics.frontendLatency)}`}>
+          {metrics.frontendLatency.toFixed(1)}ms
         </span>
       </div>
     </div>

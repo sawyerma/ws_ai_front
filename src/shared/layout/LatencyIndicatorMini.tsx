@@ -17,24 +17,24 @@ export const LatencyIndicatorMini: React.FC<LatencyIndicatorMiniProps> = ({ onCl
   // Individuelle Thresholds für jeden Wert - ABER: Offline = immer rot
   const getLatencyColor = (value: number, type: 'fastapi' | 'websocket' | 'gui'): string => {
     // ❌ Backend offline → alle Werte rot
-    if (!isBackendOnline) return 'text-red-500';
+    if (!isBackendOnline) return 'text-[hsl(var(--status-error))]';
     
-    // ✅ Backend online → normale Ampel-Logik
+    // ✅ Backend online → normale Ampel-Logik mit globalen CSS-Variablen
     switch (type) {
       case 'fastapi':
-        if (value < 5) return 'text-green-500';
-        if (value <= 20) return 'text-yellow-500';
-        return 'text-red-500';
+        if (value < 5) return 'text-[hsl(var(--status-success))]';
+        if (value <= 20) return 'text-[hsl(var(--status-warning))]';
+        return 'text-[hsl(var(--status-error))]';
       
       case 'websocket':
-        if (value < 10) return 'text-green-500';
-        if (value <= 50) return 'text-yellow-500';
-        return 'text-red-500';
+        if (value < 10) return 'text-[hsl(var(--status-success))]';
+        if (value <= 50) return 'text-[hsl(var(--status-warning))]';
+        return 'text-[hsl(var(--status-error))]';
       
       case 'gui':
-        if (value < 5) return 'text-green-500';
-        if (value <= 39) return 'text-yellow-500';
-        return 'text-red-500';
+        if (value < 5) return 'text-[hsl(var(--status-success))]';
+        if (value <= 39) return 'text-[hsl(var(--status-warning))]';
+        return 'text-[hsl(var(--status-error))]';
       
       default:
         return 'text-muted-foreground';
@@ -48,7 +48,7 @@ export const LatencyIndicatorMini: React.FC<LatencyIndicatorMiniProps> = ({ onCl
     >
       <div className="flex items-center gap-4 whitespace-nowrap">
         {/* Status-Anzeige: Grün wenn online, Rot wenn offline */}
-        <span className={isBackendOnline ? 'text-green-500' : 'text-red-500'}>
+        <span className={isBackendOnline ? 'text-[hsl(var(--status-success))]' : 'text-[hsl(var(--status-error))]'}>
           ● System connection {isBackendOnline ? 'stable' : 'offline'}
         </span>
         
