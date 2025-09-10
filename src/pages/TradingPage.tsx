@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import {
   PriceDisplay,
   CoinSelector,
-  SystemStatus,
   TradingTerminal
 } from "../features/trading";
 import TimeButtons from "../features/trading/components/TimeButtons";
@@ -142,10 +141,6 @@ const TradingPage = () => {
       <div className="mt-4 space-y-2">
         <TradingTerminal />
 
-        {/* System Status - ALWAYS below terminal, never overlaps */}
-        <div className="flex justify-end">
-          <SystemStatus />
-        </div>
       </div>
     </div>
   );

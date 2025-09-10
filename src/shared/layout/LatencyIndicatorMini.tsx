@@ -14,12 +14,19 @@ interface LatencyIndicatorMiniProps {
 export const LatencyIndicatorMini: React.FC<LatencyIndicatorMiniProps> = ({ onClick }) => {
   const { metrics, isBackendOnline } = useGlobalPerformance();
 
-  // Individuelle Thresholds für jeden Wert - ABER: Offline = immer rot
+  // Individuelle Thresholds für jeden Wert - GUI IMMER nach Wert färben!
   const getLatencyColor = (value: number, type: 'fastapi' | 'websocket' | 'gui'): string => {
-    // ❌ Backend offline → alle Werte rot
+    // ✅ GUI wird IMMER nach Wert gefärbt (unabhängig vom Backend-Status)
+    if (type === 'gui') {
+      if (value < 5) return 'text-[hsl(var(--status-success))]';
+      if (value <= 39) return 'text-[hsl(var(--status-warning))]';
+      return 'text-[hsl(var(--status-error))]';
+    }
+    
+    // ❌ Backend offline → FastAPI/WebSocket rot
     if (!isBackendOnline) return 'text-[hsl(var(--status-error))]';
     
-    // ✅ Backend online → normale Ampel-Logik mit globalen CSS-Variablen
+    // ✅ Backend online → normale Ampel-Logik für FastAPI/WebSocket
     switch (type) {
       case 'fastapi':
         if (value < 5) return 'text-[hsl(var(--status-success))]';
@@ -29,11 +36,6 @@ export const LatencyIndicatorMini: React.FC<LatencyIndicatorMiniProps> = ({ onCl
       case 'websocket':
         if (value < 10) return 'text-[hsl(var(--status-success))]';
         if (value <= 50) return 'text-[hsl(var(--status-warning))]';
-        return 'text-[hsl(var(--status-error))]';
-      
-      case 'gui':
-        if (value < 5) return 'text-[hsl(var(--status-success))]';
-        if (value <= 39) return 'text-[hsl(var(--status-warning))]';
         return 'text-[hsl(var(--status-error))]';
       
       default:
