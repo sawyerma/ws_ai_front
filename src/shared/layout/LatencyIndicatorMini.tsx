@@ -54,20 +54,20 @@ export const LatencyIndicatorMini: React.FC<LatencyIndicatorMiniProps> = ({ onCl
           ● System connection {isBackendOnline ? 'stable' : 'offline'}
         </span>
         
-        <span className="text-muted-foreground">FastAPI = 
-          <span className={getLatencyColor(metrics.fastApiLatency, 'fastapi')}>
+        <span className="text-muted-foreground">FastAPI =
+          <span className={`${getLatencyColor(metrics.fastApiLatency, 'fastapi')} inline-block w-16 text-right`}>
             {isBackendOnline ? `${metrics.fastApiLatency.toFixed(1)}ms` : 'N/A'}
           </span>
         </span>
         
-        <span className="text-muted-foreground">WS = 
-          <span className={getLatencyColor(metrics.websocketLatency, 'websocket')}>
+        <span className="text-muted-foreground">WS =
+          <span className={`${getLatencyColor(metrics.websocketLatency, 'websocket')} inline-block w-16 text-right`}>
             {isBackendOnline ? `${metrics.websocketLatency.toFixed(1)}ms` : 'N/A'}
           </span>
         </span>
         
-        <span className="text-muted-foreground">GUI = 
-          <span className={getLatencyColor(metrics.frontendLatency, 'gui')}>
+        <span className="text-muted-foreground">GUI =
+          <span className={`${getLatencyColor(metrics.frontendLatency, 'gui')} inline-block w-16 text-right`}>
             {metrics.frontendLatency.toFixed(1)}ms
           </span>
         </span>
