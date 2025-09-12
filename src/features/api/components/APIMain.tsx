@@ -7,7 +7,6 @@ import { Badge } from '@/shared/ui/badge';
 import { Progress } from '@/shared/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Label } from '@/shared/ui/label';
-import { Separator } from '@/shared/ui/separator';
 
 type Provider = 'binance' | 'bitget' | 'etherscan' | 'bscscan' | 'polygonscan' | 'coingecko' | 'telegram';
 
