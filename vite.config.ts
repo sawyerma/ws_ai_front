@@ -14,7 +14,49 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8100',
         changeOrigin: true,
+        secure: false,
         rewrite: (path) => path.replace(/^\/api/, '')
+      },
+      '/ws': {
+        target: 'ws://localhost:8100',
+        ws: true,
+        changeOrigin: true,
+        secure: false
+      },
+      '/health': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/docs': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/symbols': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/trades': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/ohlc': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/ticker': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
+      },
+      '/market': {
+        target: 'http://localhost:8100',
+        changeOrigin: true,
+        secure: false
       }
     }
   },
