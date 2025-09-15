@@ -31,9 +31,9 @@ const TradingPage = () => {
     id: "1",
     symbol: "BTC/USDT",
     market: "spot",
-    price: "104,911.62",
-    change: "-3.56%",
-    changePercent: -3.56,
+    price: "Loading...",
+    change: "Loading...",
+    changePercent: 0,
     isFavorite: true,
     liveStatus: "green",
     histStatus: "green",
@@ -41,30 +41,76 @@ const TradingPage = () => {
 
   // Live Marktdaten aus Backend-API
   const [marketData, setMarketData] = useState({
-    change24h: "-3.56%",
-    high24h: "110,157.20",
-    low24h: "99,666.04",
-    volume24h: "6.08K",
-    turnover24h: "645.65M",
+    change24h: "Loading...",
+    high24h: "Loading...",
+    low24h: "Loading...",
+    volume24h: "Loading...",
+    turnover24h: "Loading...",
     category: "Public Chain",
   });
+
+  // ✅ ECHTE API-INTEGRATION: Load real market data
+  useEffect(() => {
+    const loadRealData = async () => {
+      try {
+        const { SymbolsAPI } = await import('../services/api');
+        const ticker = await SymbolsAPI.getTicker(
+          selectedExchange, 
+          selectedCoin.replace('/', ''), 
+          selectedMarket
+        );
+        
+        if (ticker) {
+          const changePercent = ticker.changeRate * 100;
+          const changeStr = `${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%`;
+          
+          setCurrentCoinData(prev => ({
+            ...prev,
+            price: ticker.last.toLocaleString('en-US', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 8 
+            }),
+            change: changeStr,
+            changePercent: changePercent
+          }));
+          
+          setMarketData(prev => ({
+            ...prev,
+            change24h: changeStr,
+            high24h: ticker.high24h?.toLocaleString() || prev.high24h,
+            low24h: ticker.low24h?.toLocaleString() || prev.low24h,
+            volume24h: ticker.baseVol?.toLocaleString() || prev.volume24h
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load real trading data:', error);
+      }
+    };
+    
+    if (selectedCoin && selectedExchange) {
+      loadRealData();
+    }
+  }, [selectedCoin, selectedExchange, selectedMarket]);
 
   const handleSymbolSelect = (symbol: string, market: string) => {
     setSelectedCoin(symbol);
     setSelectedMarket(market);
     
-    // Update current coin data
-    setCurrentCoinData({
+    // ✅ ECHTE API-INTEGRATION: Update current coin data without hardcoded values
+    setCurrentCoinData(prev => ({
+      ...prev,
       id: symbol,
       symbol: symbol.includes('/') ? symbol : `${symbol.substring(0, symbol.length - 4)}/${symbol.substring(symbol.length - 4)}`,
       market: market,
-      price: "104,911.62", // Placeholder
-      change: "-3.56%", // Placeholder  
-      changePercent: -3.56, // Placeholder
+      price: "Loading...", // Wird durch useEffect API-Call aktualisiert
+      change: "Loading...", // Wird durch useEffect API-Call aktualisiert
+      changePercent: 0, // Wird durch useEffect API-Call aktualisiert
       isFavorite: false,
       liveStatus: "green",
       histStatus: "green",
-    });
+    }));
+    
+    console.log(`[TradingPage] Symbol selected: ${symbol}, Market: ${market} - loading real data...`);
   };
 
   const handleCoinSelect = (coin: CoinData) => {
@@ -117,7 +163,7 @@ const TradingPage = () => {
             selectedSymbol={currentCoinData.symbol}
             onSymbolSelect={handleSymbolSelect}
             exchange={selectedExchange}
-            selectedMarket={tradingMode}
+            selectedMarket={selectedMarket}
           />
         </div>
 
