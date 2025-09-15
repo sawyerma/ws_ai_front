@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTradingContext } from "../../contexts/TradingContext";
 import ThemeToggle from "../ui/theme-toggle";
 
 const GlobalNav = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { selectedExchange, setSelectedExchange, setSelectedMarket } = useTradingContext();
   
   const [activeTab, setActiveTab] = useState(() => {
     // Set active tab based on current route
@@ -22,8 +24,10 @@ const GlobalNav = () => {
   });
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [selectedExchange, setSelectedExchange] = useState("Bitget");
   const [isExchangeDropdownOpen, setIsExchangeDropdownOpen] = useState(false);
+  
+  // Display name mapping for UI
+  const exchangeDisplayName = selectedExchange === "bitget" ? "Bitget" : "Binance";
 
   const marketOptions = [
     {
@@ -81,14 +85,25 @@ const GlobalNav = () => {
   };
 
   const handleMarketOptionClick = (option: string) => {
+    // ✅ FIX: Market-Auswahl zu Context propagieren
+    const marketMap: { [key: string]: string } = {
+      "Spot": "spot",
+      "USDT-M Futures": "futures",
+      "Coin-M Perpetual-Futures": "futures",
+      "Coin-M Delivery-Futures": "futures", 
+      "USDC-M Futures": "futures"
+    };
+    setSelectedMarket(marketMap[option] || "spot");
     setActiveTab("Market");
     setIsDropdownOpen(false);
-    navigate("/trading"); // Always go to trading page for market options
+    navigate("/trading");
+    console.log(`[GlobalNav] Market changed to: ${option} → ${marketMap[option] || "spot"}`);
   };
 
   const handleExchangeChange = (exchange: string) => {
-    // This functionality can be extended later if needed
-    console.log('Exchange changed to:', exchange);
+    // ✅ FIX: Exchange-Auswahl zu Context propagieren
+    setSelectedExchange(exchange);
+    console.log(`[GlobalNav] Exchange changed to: ${exchange}`);
   };
 
   return (
@@ -145,7 +160,7 @@ const GlobalNav = () => {
             className="px-3 py-1.5 bg-muted hover:bg-muted/80 rounded font-medium text-sm transition-colors text-foreground"
             onClick={() => setIsExchangeDropdownOpen(!isExchangeDropdownOpen)}
           >
-            {selectedExchange} ▽
+            {exchangeDisplayName} ▽
           </button>
           
           {/* Exchange Dropdown Menu */}
@@ -154,7 +169,6 @@ const GlobalNav = () => {
               <div
                 className="p-2 hover:bg-muted cursor-pointer text-sm font-medium text-foreground"
                 onClick={() => {
-                  setSelectedExchange("Bitget");
                   setIsExchangeDropdownOpen(false);
                   handleExchangeChange("bitget");
                 }}
@@ -164,7 +178,6 @@ const GlobalNav = () => {
               <div
                 className="p-2 hover:bg-muted cursor-pointer text-sm font-medium text-foreground"
                 onClick={() => {
-                  setSelectedExchange("Binance");
                   setIsExchangeDropdownOpen(false);
                   handleExchangeChange("binance");
                 }}

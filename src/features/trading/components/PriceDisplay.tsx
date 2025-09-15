@@ -61,13 +61,23 @@ const PriceDisplay = ({
   );
   const [priceColor, setPriceColor] = useState<string>("text-foreground");
 
-  // ✅ ENTERPRISE-WEBSOCKET-REAL-TIME-UPDATES (MS-BEREICH):
+  // ✅ FIX: KEINE eigenen API-Calls wenn TradingPage bereits Daten liefert
   useEffect(() => {
     if (!selectedCoin || !selectedExchange) return;
     
-    // Initial API load
+    // ✅ CONFLICT RESOLUTION: Nur API-Calls wenn TradingPage KEINE Daten hat
+    const shouldLoadOwnData = currentCoinData.price === "Loading..." || 
+                              currentCoinData.price === "104,911.62"; // Fallback-Werte
+    
+    if (!shouldLoadOwnData) {
+      console.log('[PriceDisplay] Using data from TradingPage, skipping own API calls');
+      return;
+    }
+    
+    // Initial API load (nur als Fallback)
     const initialLoad = async () => {
       try {
+        console.log('[PriceDisplay] Loading fallback data (TradingPage data not available)');
         const ticker = await SymbolsAPI.getTicker(
           selectedExchange, 
           selectedCoin.replace('/', ''), 
@@ -100,7 +110,7 @@ const PriceDisplay = ({
           if (onMarketDataUpdate) onMarketDataUpdate(updatedMarketData);
         }
       } catch (error) {
-        console.error('Failed to load initial price:', error);
+        console.error('Failed to load fallback price:', error);
       }
     };
     

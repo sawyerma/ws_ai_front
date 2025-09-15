@@ -6,6 +6,7 @@ import {
 } from "../features/trading";
 import TimeButtons from "../features/trading/components/TimeButtons";
 import ChartSection from "../features/trading/components/ChartSection";
+import { useTradingContext } from "../contexts/TradingContext";
 
 interface CoinData {
   id: string;
@@ -20,10 +21,11 @@ interface CoinData {
 }
 
 const TradingPage = () => {
+  // ✅ FIX: Context State für Exchange/Market nutzen statt lokale States
+  const { selectedExchange, selectedMarket, setSelectedExchange, setSelectedMarket } = useTradingContext();
+  
   const [selectedCoin, setSelectedCoin] = useState("BTCUSDT");
-  const [selectedMarket, setSelectedMarket] = useState("spot");
   const [selectedInterval, setSelectedInterval] = useState("1m");
-  const [selectedExchange, setSelectedExchange] = useState("bitget");
   const [selectedIndicators, setSelectedIndicators] = useState<string[]>([]);
   const [tradingMode, setTradingMode] = useState("Spot");
   

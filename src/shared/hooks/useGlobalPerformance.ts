@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { performanceMetrics, PerformanceMetrics as NewPerformanceMetrics } from '../../services/performanceMetrics';
+import { API_CONFIG } from '../../config';
 
 interface PerformanceMetrics {
   frontendLatency: number;
@@ -66,7 +67,7 @@ export const useGlobalPerformance = () => {
   const fetchBackendMetrics = useCallback(async () => {
     try {
       const startTime = performance.now();
-      const response = await fetch('/api/ws/metrics');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/api/ws/metrics`);
       const endTime = performance.now();
       
       // FastAPI Latenz aus Header oder Messung
