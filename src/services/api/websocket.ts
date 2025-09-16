@@ -1,5 +1,5 @@
 import { API_CONFIG } from '../../config';
-import { WebSocketMessage } from '../../types';
+import { WebSocketMessage } from '../../features/trading/types/trading';
 
 export class WebSocketService {
   private static instance: WebSocketService;
@@ -47,7 +47,15 @@ export class WebSocketService {
     this.ws.onmessage = (event: MessageEvent) => {
       try {
         const message: WebSocketMessage = JSON.parse(event.data);
-        this.emit(message.type, message.data);
+        
+        // 🔧 Defensive Programmierung: Validiere message.data
+        if (message && message.type && message.data !== undefined) {
+          this.emit(message.type, message.data);
+        } else {
+          console.warn('Invalid WebSocket message format:', message);
+          // Emit raw data als Fallback
+          this.emit('raw_message', message);
+        }
       } catch (error) {
         console.error('WebSocket message parse error:', error);
         this.emit('error', error);
