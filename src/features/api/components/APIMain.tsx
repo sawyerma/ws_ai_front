@@ -8,7 +8,11 @@ import { Progress } from '@/shared/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/ui/tabs';
 import { Label } from '@/shared/ui/label';
 
-type Provider = 'binance' | 'bitget' | 'etherscan' | 'bscscan' | 'polygonscan' | 'coingecko' | 'telegram';
+type Provider = 'binance' | 'bitget' | 'etherscan' | 'bscscan' | 'polygonscan' | 'coingecko' | 'telegram' |
+                // 🆕 Neue Provider für 365 Findings:
+                'redis' | 'clickhouse' | 'backend' | 'ollama' |
+                'localhost' | 'frontend-dev' | 'test-env' |
+                'timeouts' | 'retries' | 'performance';
 
 export const APIMain: React.FC = () => {
   const apiState = useAPIKeys();
@@ -50,6 +54,25 @@ export const APIMain: React.FC = () => {
       name: 'Notifications', 
       icon: '📱',
       providers: ['telegram'] as Provider[]
+    },
+    // 🆕 NEUE Kategorien für 365 Findings:
+    {
+      id: 'infrastructure',
+      name: 'Infrastructure',
+      icon: '🏗️',
+      providers: ['redis', 'clickhouse', 'backend', 'ollama'] as Provider[]
+    },
+    {
+      id: 'development',
+      name: 'Development',
+      icon: '🔧', 
+      providers: ['localhost', 'frontend-dev', 'test-env'] as Provider[]
+    },
+    {
+      id: 'system',
+      name: 'System Config',
+      icon: '⚙️',
+      providers: ['timeouts', 'retries', 'performance'] as Provider[]
     }
   ];
 
@@ -95,7 +118,40 @@ export const APIMain: React.FC = () => {
         sendMessage: 'https://api.telegram.org/bot{TOKEN}/sendMessage',
         sendPhoto: 'https://api.telegram.org/bot{TOKEN}/sendPhoto',
         sendDocument: 'https://api.telegram.org/bot{TOKEN}/sendDocument'
-      }
+      },
+      // 🆕 NEUE Infrastructure Provider:
+      redis: {
+        connection: 'redis://localhost:6379'
+      },
+      clickhouse: {
+        http: 'http://localhost:8123',
+        tcp: 'tcp://localhost:9000'
+      },
+      backend: {
+        rest: 'http://localhost:8100',
+        websocket: 'ws://localhost:8100'
+      },
+      ollama: {
+        api: 'http://localhost:11434'
+      },
+      // 🆕 NEUE Development Provider:
+      localhost: {
+        frontend: 'http://localhost:8080',
+        backend: 'http://localhost:8100',
+        api: 'http://localhost:8100/api'
+      },
+      'frontend-dev': {
+        devServer: 'http://localhost:8080',
+        hotReload: 'ws://localhost:8080'
+      },
+      'test-env': {
+        testAPI: 'http://localhost:9999',
+        mockAPI: 'http://localhost:9998'
+      },
+      // 🆕 NEUE System Configuration Provider:
+      timeouts: {},
+      retries: {},
+      performance: {}
     };
     return defaults[provider]?.[urlType] || '';
   };
@@ -147,6 +203,48 @@ export const APIMain: React.FC = () => {
       },
       telegram: {
         messagesPerMin: 30
+      },
+      // 🆕 NEUE Infrastructure Provider:
+      redis: {
+        connectionPool: 10,
+        commandTimeout: 5000
+      },
+      clickhouse: {
+        queryTimeout: 30000,
+        connectionTimeout: 10000
+      },
+      backend: {
+        requestsPerSecond: 100,
+        connectionTimeout: 30000
+      },
+      ollama: {
+        requestTimeout: 60000,
+        maxConcurrent: 5
+      },
+      // 🆕 NEUE Development Provider:
+      localhost: {
+        devTimeout: 5000
+      },
+      'frontend-dev': {
+        buildTimeout: 30000,
+        reloadDelay: 1000
+      },
+      'test-env': {
+        testTimeout: 10000,
+        assertionTimeout: 5000
+      },
+      // 🆕 NEUE System Configuration Provider:
+      timeouts: {
+        maxTimeout: 60000,
+        minTimeout: 1000
+      },
+      retries: {
+        totalRetryTime: 30000,
+        retryLimit: 5
+      },
+      performance: {
+        maxMemoryUsage: 80,
+        maxCPUUsage: 70
       }
     };
     return defaults[provider]?.[limitType] || 0;
@@ -283,6 +381,69 @@ export const APIMain: React.FC = () => {
       icon: '📱',
       urls: ['bot', 'sendMessage', 'sendPhoto', 'sendDocument'],
       rateLimits: ['messagesPerMin']
+    },
+    // 🆕 NEUE Infrastructure Provider:
+    redis: {
+      name: 'Redis Cache',
+      icon: '🔴',
+      urls: ['connection'],
+      rateLimits: ['connectionPool', 'commandTimeout']
+    },
+    clickhouse: {
+      name: 'ClickHouse DB',
+      icon: '🟡',
+      urls: ['http', 'tcp'],
+      rateLimits: ['queryTimeout', 'connectionTimeout']
+    },
+    backend: {
+      name: 'Backend API',
+      icon: '🔵',
+      urls: ['rest', 'websocket'],
+      rateLimits: ['requestsPerSecond', 'connectionTimeout']
+    },
+    ollama: {
+      name: 'Ollama AI',
+      icon: '🤖',
+      urls: ['api'],
+      rateLimits: ['requestTimeout', 'maxConcurrent']
+    },
+    // 🆕 NEUE Development Provider:
+    localhost: {
+      name: 'Localhost URLs',
+      icon: '🏠',
+      urls: ['frontend', 'backend', 'api'],
+      rateLimits: ['devTimeout']
+    },
+    'frontend-dev': {
+      name: 'Frontend Dev',
+      icon: '⚡',
+      urls: ['devServer', 'hotReload'],
+      rateLimits: ['buildTimeout', 'reloadDelay']
+    },
+    'test-env': {
+      name: 'Test Environment',
+      icon: '🧪',
+      urls: ['testAPI', 'mockAPI'],
+      rateLimits: ['testTimeout', 'assertionTimeout']
+    },
+    // 🆕 NEUE System Configuration Provider:
+    timeouts: {
+      name: 'Timeouts',
+      icon: '⏱️',
+      urls: [],
+      rateLimits: ['maxTimeout', 'minTimeout']
+    },
+    retries: {
+      name: 'Retry Logic',
+      icon: '🔄',
+      urls: [],
+      rateLimits: ['totalRetryTime', 'retryLimit']
+    },
+    performance: {
+      name: 'Performance',
+      icon: '🚀',
+      urls: [],
+      rateLimits: ['maxMemoryUsage', 'maxCPUUsage']
     }
   };
 
@@ -547,22 +708,28 @@ export const APIMain: React.FC = () => {
                   <TabsContent value="usage" className="space-y-4">
                     <Card className="p-6">
                       <h3 className="text-lg font-semibold mb-4">Daily Usage Display</h3>
-                      {apiSettings.usage[selectedProvider] && (
+                      {apiSettings.usage?.[selectedProvider] && (
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <span className="font-medium">Today:</span>
-                            <span className={`font-medium ${getUsageColor(apiSettings.usage[selectedProvider].percentage)}`}>
-                              {Object.entries(apiSettings.usage[selectedProvider].usage).map(([key, value]) => 
+                            <span className={`font-medium ${getUsageColor(apiSettings.usage[selectedProvider]?.percentage || 0)}`}>
+                              {Object.entries(apiSettings.usage[selectedProvider]?.usage || {}).map(([key, value]) => 
                                 `${value}`
-                              ).join(', ')} / {Object.entries(apiSettings.usage[selectedProvider].limits).map(([key, value]) => 
+                              ).join(', ')} / {Object.entries(apiSettings.usage[selectedProvider]?.limits || {}).map(([key, value]) => 
                                 `${value}`
-                              ).join(', ')} requests ({apiSettings.usage[selectedProvider].percentage}%)
+                              ).join(', ')} requests ({apiSettings.usage[selectedProvider]?.percentage || 0}%)
                             </span>
                           </div>
                           <Progress 
-                            value={Math.min(apiSettings.usage[selectedProvider].percentage, 100)}
+                            value={Math.min(apiSettings.usage[selectedProvider]?.percentage || 0, 100)}
                             className="h-3"
                           />
+                        </div>
+                      )}
+                      {!apiSettings.usage?.[selectedProvider] && (
+                        <div className="text-center text-muted-foreground py-8">
+                          <div className="text-2xl mb-2">📊</div>
+                          <p>Usage data will be available once the provider is actively used.</p>
                         </div>
                       )}
                     </Card>

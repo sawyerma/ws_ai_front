@@ -1,9 +1,18 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:8100';
 
-// Provider types based on gui_api.md specification
-const PROVIDERS = ['binance', 'bitget', 'etherscan', 'bscscan', 'polygonscan', 'coingecko', 'telegram'] as const;
+// Provider types based on gui_api.md specification - ERWEITERT für 365 Findings
+const PROVIDERS = [
+  // ✅ Bestehende Provider
+  'binance', 'bitget', 'etherscan', 'bscscan', 'polygonscan', 'coingecko', 'telegram',
+  // 🆕 NEUE Infrastructure Provider
+  'redis', 'clickhouse', 'backend', 'ollama',
+  // 🆕 NEUE Development Provider  
+  'localhost', 'frontend-dev', 'test-env',
+  // 🆕 NEUE System Configuration Provider
+  'timeouts', 'retries', 'performance'
+] as const;
 type Provider = typeof PROVIDERS[number];
 
 interface ProviderURLs {
