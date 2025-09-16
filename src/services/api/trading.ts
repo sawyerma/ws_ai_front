@@ -9,10 +9,16 @@ export class TradingAPI extends BaseAPI {
     limit: number = 15
   ): Promise<{ asks: OrderBookEntry[]; bids: OrderBookEntry[] }> {
     try {
-      const response = await this.request<{ asks: OrderBookEntry[]; bids: OrderBookEntry[] }>(`/api/market/orderbook`, {
+      // OrderBook API has .data wrapper (latenz-optimiert structure)
+      const response = await this.request<{ 
+        data: { 
+          asks: OrderBookEntry[]; 
+          bids: OrderBookEntry[] 
+        } 
+      }>(`/api/market/orderbook`, {
         params: { symbol, market_type: market, exchange, limit }
       });
-      return response || { asks: [], bids: [] };
+      return response?.data || { asks: [], bids: [] };
     } catch (error) {
       console.error(`[TradingAPI] Failed to fetch orderbook for ${symbol}:`, error);
       return { asks: [], bids: [] };
@@ -26,6 +32,7 @@ export class TradingAPI extends BaseAPI {
     limit: number = 100
   ): Promise<Trade[]> {
     try {
+      // Trades API format based on backend structure
       const response = await this.request<Trade[]>(`/api/market/trades`, {
         params: { symbol, market_type: market, exchange, limit }
       });
