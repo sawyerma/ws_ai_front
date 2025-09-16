@@ -1,5 +1,5 @@
 import { BaseAPI } from './base';
-import { CoinData, APIResponse } from '../../types'; // Assuming CoinData is the desired output type for symbols
+import { CoinData } from '../../features/trading/types/trading';
 
 // --- HELPERS (extracted from original symbols.ts) ---
 
@@ -75,16 +75,16 @@ export class SymbolsAPI extends BaseAPI {
         params.market = marketFilter;
       }
       
-      const symbolsData = await this.request<APIResponse<{ symbols: BackendSymbol[] }>>(`/api/market/symbols`, { params: params });
-      const tickersData = await this.request<APIResponse<{ tickers: BackendTicker[] }>>(`/api/market/ticker`, { params: { exchange } });
+      const symbolsData = await this.request<{ symbols: BackendSymbol[], count: number }>(`/api/market/symbols`, { params: params });
+      const tickersData = await this.request<{ tickers: BackendTicker[], count: number }>(`/api/market/ticker`, { params: { exchange } });
 
       const tickerMap = new Map<string, BackendTicker>();
-      tickersData.data?.tickers?.forEach(ticker => {
+      tickersData.tickers?.forEach(ticker => {
         const key = `${ticker.symbol}_${ticker.market_type}`;
         tickerMap.set(key, ticker);
       });
       
-      const symbols: CoinData[] = symbolsData.data?.symbols?.map(symbol => {
+      const symbols: CoinData[] = symbolsData.symbols?.map(symbol => {
         const tickerKey = `${symbol.symbol}_${symbol.market_type}`;
         const ticker = tickerMap.get(tickerKey) ?? {
           last: 0,
@@ -114,10 +114,10 @@ export class SymbolsAPI extends BaseAPI {
 
   static async getTicker(exchange: string, symbol: string, market?: string): Promise<BackendTicker | null> {
     try {
-      const response = await this.request<APIResponse<{ tickers: BackendTicker[] }>>(`/api/market/ticker`, { 
+      const response = await this.request<{ tickers: BackendTicker[], count: number }>(`/api/market/ticker`, { 
         params: { exchange, symbol, market_type: market } 
       });
-      return response.data?.tickers?.[0] || null; // Assuming the backend returns an array and we need the first one
+      return response.tickers?.[0] || null; // Direct access to tickers array
     } catch (error) {
       console.error(`[SymbolsAPI] Failed to fetch ticker for ${symbol}:`, error);
       return null;

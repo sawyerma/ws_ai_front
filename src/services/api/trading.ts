@@ -1,5 +1,5 @@
 import { BaseAPI } from './base';
-import { APIResponse, OrderBookEntry, Trade } from '../../types';
+import { OrderBookEntry, Trade } from '../../features/trading/types/trading';
 
 export class TradingAPI extends BaseAPI {
   static async getOrderBook(
@@ -9,10 +9,10 @@ export class TradingAPI extends BaseAPI {
     limit: number = 15
   ): Promise<{ asks: OrderBookEntry[]; bids: OrderBookEntry[] }> {
     try {
-      const response = await this.request<APIResponse<{ asks: OrderBookEntry[]; bids: OrderBookEntry[] }>>(`/api/market/orderbook`, {
+      const response = await this.request<{ asks: OrderBookEntry[]; bids: OrderBookEntry[] }>(`/api/market/orderbook`, {
         params: { symbol, market_type: market, exchange, limit }
       });
-      return response.data || { asks: [], bids: [] };
+      return response || { asks: [], bids: [] };
     } catch (error) {
       console.error(`[TradingAPI] Failed to fetch orderbook for ${symbol}:`, error);
       return { asks: [], bids: [] };
@@ -26,10 +26,10 @@ export class TradingAPI extends BaseAPI {
     limit: number = 100
   ): Promise<Trade[]> {
     try {
-      const response = await this.request<APIResponse<Trade[]>>(`/api/market/trades`, {
+      const response = await this.request<Trade[]>(`/api/market/trades`, {
         params: { symbol, market_type: market, exchange, limit }
       });
-      return response.data || [];
+      return response || [];
     } catch (error) {
       console.error(`[TradingAPI] Failed to fetch trades for ${symbol}:`, error);
       return [];
