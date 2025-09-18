@@ -38,7 +38,7 @@ export interface ProviderConfigs {
 let cachedProviders: ProviderConfigs | null = null;
 let providersPromise: Promise<ProviderConfigs> | null = null;
 
-// Fallback-Provider-Konfiguration für den Fall, dass das Backend nicht erreichbar ist
+// Fallback-Provider-Konfiguration mit Environment Variables
 const FALLBACK_PROVIDERS: ProviderConfigs = {
   // Blockchain APIs
   etherscan: {
@@ -46,7 +46,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'Etherscan',
     category: 'blockchain',
     description: 'Ethereum blockchain explorer and analytics platform',
-    url: 'https://api.etherscan.io/api',
+    url: '/api/fallback/etherscan',
     registerUrl: 'https://etherscan.io/apis',
     documentation: 'https://docs.etherscan.io/',
     icon: '⟨E⟩',
@@ -65,7 +65,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'BSCScan',
     category: 'blockchain',
     description: 'Binance Smart Chain explorer for BSC data',
-    url: 'https://api.bscscan.com/api',
+    url: '/api/fallback/bscscan',
     registerUrl: 'https://bscscan.com/apis',
     documentation: 'https://docs.bscscan.com/',
     icon: '⟨B⟩',
@@ -84,7 +84,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'PolygonScan',
     category: 'blockchain',
     description: 'Polygon blockchain explorer for MATIC network',
-    url: 'https://api.polygonscan.com/api',
+    url: '/api/fallback/polygonscan',
     registerUrl: 'https://polygonscan.com/apis',
     documentation: 'https://docs.polygonscan.com/',
     icon: '⟨P⟩',
@@ -103,7 +103,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'CoinGecko',
     category: 'data',
     description: 'Cryptocurrency data and market information',
-    url: 'https://api.coingecko.com/api/v3',
+    url: '/api/fallback/coingecko',
     registerUrl: 'https://www.coingecko.com/en/api',
     documentation: 'https://www.coingecko.com/en/api/documentation',
     icon: '🦎',
@@ -123,7 +123,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'Binance',
     category: 'exchange',
     description: 'World\'s largest cryptocurrency exchange platform',
-    url: 'https://api.binance.com/api/v3',
+    url: '/api/fallback/binance',
     registerUrl: 'https://www.binance.com/en/binance-api',
     documentation: 'https://binance-docs.github.io/apidocs/',
     icon: '₿',
@@ -142,7 +142,7 @@ const FALLBACK_PROVIDERS: ProviderConfigs = {
     name: 'Bitget',
     category: 'exchange',
     description: 'Leading cryptocurrency derivatives exchange',
-    url: 'https://api.bitget.com/api/v2',
+    url: '/api/fallback/bitget',
     registerUrl: 'https://www.bitget.com/api-doc/',
     documentation: 'https://bitgetlimited.github.io/apidoc/',
     icon: '🚀',
@@ -242,7 +242,7 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
         },
         coingecko: {
           ...FALLBACK_PROVIDERS.coingecko,
-          url: coingeckoData.api || 'https://api.coingecko.com/api/v3',
+          url: coingeckoData.api || (import.meta as any)?.env?.VITE_COINGECKO_API_URL || 'https://api.coingecko.com/api/v3',
         },
         binance: {
           ...FALLBACK_PROVIDERS.binance,

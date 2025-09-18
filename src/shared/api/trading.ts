@@ -183,7 +183,7 @@ export async function fetchSymbols(exchange: Exchange = DEFAULT_EXCHANGE): Promi
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+        timeout: parseInt((import.meta as any)?.env?.VITE_API_TIMEOUT || '10000'),
     } as any);
     
     if (!response.ok) {
@@ -213,7 +213,7 @@ export async function fetchTickers(exchange: Exchange = DEFAULT_EXCHANGE): Promi
         'Accept': 'application/json',
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+      timeout: parseInt((import.meta as any)?.env?.VITE_API_TIMEOUT || '10000'),
     } as any);
     
     if (!response.ok) {

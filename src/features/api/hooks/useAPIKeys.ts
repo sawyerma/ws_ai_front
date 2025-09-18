@@ -9,7 +9,7 @@ import { API_PROVIDERS } from '../types/providers';
 import { buildAPIPayload, buildValidationPayload, calculateResetTime } from '../types/api';
 
 // API Base URL
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8100';
+const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:8100';
 
 // Initialize rate limits with proper typing
 const initializeRateLimits = () => {
@@ -102,7 +102,7 @@ export const useAPIKeys = () => {
           apiKey: '',
           secret: '',
           passphrase: '',
-          timeout: 10000,
+          timeout: parseInt((import.meta as any)?.env?.VITE_API_TIMEOUT || '10000'),
           retryAttempts: 3,
           enableRateLimit: true,
           priority: 'medium'
