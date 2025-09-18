@@ -2,6 +2,11 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react-swc'
 import path from "path"
 
+// Load Environment Variables for Vite Config
+const DEV_PORT = parseInt(process.env.VITE_DEV_PORT || '8080');
+const BACKEND_BASE = process.env.VITE_BACKEND_BASE || 'http://localhost:8100';
+const BACKEND_WS = process.env.VITE_BACKEND_WS || 'ws://localhost:8100';
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
@@ -9,52 +14,52 @@ export default defineConfig({
   ],
   server: {
     host: "::",
-    port: 8080,
+    port: DEV_PORT,
     proxy: {
       '/api': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '')
       },
       '/ws': {
-        target: 'ws://localhost:8100',
+        target: BACKEND_WS,
         ws: true,
         changeOrigin: true,
         secure: false
       },
       '/health': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/docs': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/symbols': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/trades': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/ohlc': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/ticker': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       },
       '/market': {
-        target: 'http://localhost:8100',
+        target: BACKEND_BASE,
         changeOrigin: true,
         secure: false
       }

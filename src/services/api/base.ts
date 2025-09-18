@@ -1,11 +1,16 @@
-import { API_CONFIG } from '../../config';
+// Service-specific API configuration (profi_gui.md: Feature-basierte Architektur)
+const SERVICE_API_CONFIG = {
+  BASE_URL: (import.meta as any)?.env?.VITE_API_BASE_URL || `http://localhost:${(import.meta as any)?.env?.VITE_BACKEND_PORT || '8100'}`,
+  TIMEOUT: 10000,
+  RETRY_ATTEMPTS: 3,
+} as const;
 
 export class BaseAPI {
-  private static baseURL = API_CONFIG.BASE_URL;
+  private static baseURL = SERVICE_API_CONFIG.BASE_URL;
   
   static async request<T>(endpoint: string, options?: RequestInit & { params?: Record<string, any> }): Promise<T> {
     const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), API_CONFIG.TIMEOUT);
+    const id = setTimeout(() => controller.abort(), SERVICE_API_CONFIG.TIMEOUT);
 
     let url = `${this.baseURL}${endpoint}`;
     if (options?.params) {

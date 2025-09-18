@@ -36,8 +36,8 @@ interface BackendSymbolsResponse {
   db_symbols: any[];
 }
 
-// Configuration
-const API_BASE = (typeof window !== 'undefined' && (window as any).__VITE_API_BASE_URL__) || 'http://localhost:8100/api/v1';
+// Configuration - Uses Vite Environment Variables (TypeScript-safe)
+const API_BASE = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8100/api/v1';
 const CACHE_TTL = 300000; // 5 minutes for symbols
 const TICKER_CACHE_TTL = 10000; // 10 seconds for tickers
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 
-const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:8100';
+// Feature-specific API configuration (profi_gui.md: Feature-basierte Architektur)
+const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || `http://localhost:${(import.meta as any)?.env?.VITE_BACKEND_PORT || '8100'}`;
 
 // Provider types based on gui_api.md specification - ERWEITERT für 365 Findings
 const PROVIDERS = [

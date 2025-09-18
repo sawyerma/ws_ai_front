@@ -1,6 +1,45 @@
+// Multi-API Provider Configuration with Dynamic Loading from Backend API
+// =====================================================================
+// Loads all provider URLs dynamically from backend settings API
+// Replaces hardcoded URLs with GUI-configurable endpoints
+// Extended pattern from k_api.md/l_api.md for multi-API architecture
+
 import { APIProvider } from './api';
 
-export const API_PROVIDERS: Record<string, Omit<APIProvider, 'status' | 'config'>> = {
+export interface ProviderConfig {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  url: string;
+  registerUrl: string;
+  documentation: string;
+  icon: string;
+  rateLimit: {
+    current: number;
+    limit: number;
+    windowMs: number;
+    resetTime: null;
+    warningThreshold: number;
+    criticalThreshold: number;
+  };
+}
+
+export interface ProviderConfigs {
+  etherscan: ProviderConfig;
+  bscscan: ProviderConfig;
+  polygonscan: ProviderConfig;
+  coingecko: ProviderConfig;
+  binance: ProviderConfig;
+  bitget: ProviderConfig;
+}
+
+// Cache für geladene Provider-Konfiguration
+let cachedProviders: ProviderConfigs | null = null;
+let providersPromise: Promise<ProviderConfigs> | null = null;
+
+// Fallback-Provider-Konfiguration für den Fall, dass das Backend nicht erreichbar ist
+const FALLBACK_PROVIDERS: ProviderConfigs = {
   // Blockchain APIs
   etherscan: {
     id: 'etherscan',
@@ -116,4 +155,197 @@ export const API_PROVIDERS: Record<string, Omit<APIProvider, 'status' | 'config'
       criticalThreshold: 570    // 95% = 570 req/min
     }
   }
-};
+} as const;
+
+/**
+ * Lädt alle Provider-Konfigurationen dynamisch vom Backend
+ * Nutzt Caching um wiederholte API-Calls zu vermeiden
+ */
+async function loadProviderConfigs(): Promise<ProviderConfigs> {
+  // Return cached config if available
+  if (cachedProviders) {
+    return cachedProviders;
+  }
+
+  // Return existing promise if already loading
+  if (providersPromise) {
+    return providersPromise;
+  }
+
+  // Start loading configuration
+  providersPromise = (async () => {
+    try {
+      // Parallel loading aller 6 Provider-APIs
+      const [etherscanUrls, bscscanUrls, polygonscanUrls, coingeckoUrls, binanceUrls, bitgetUrls] = await Promise.all([
+        fetch('/api/settings/urls/etherscan', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+        fetch('/api/settings/urls/bscscan', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+        fetch('/api/settings/urls/polygonscan', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+        fetch('/api/settings/urls/coingecko', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+        fetch('/api/settings/urls/binance', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+        fetch('/api/settings/urls/bitget', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
+      ]);
+
+      // Prüfe alle Responses
+      const responses = [etherscanUrls, bscscanUrls, polygonscanUrls, coingeckoUrls, binanceUrls, bitgetUrls];
+      const failedResponse = responses.find(r => !r.ok);
+      if (failedResponse) {
+        throw new Error(`HTTP Error: ${failedResponse.status}`);
+      }
+
+      // Parse JSON responses
+      const [etherscanData, bscscanData, polygonscanData, coingeckoData, binanceData, bitgetData] = await Promise.all([
+        etherscanUrls.json(),
+        bscscanUrls.json(),
+        polygonscanUrls.json(),
+        coingeckoUrls.json(),
+        binanceUrls.json(),
+        bitgetUrls.json(),
+      ]);
+
+      // Erstelle Provider-Konfiguration aus Backend-Daten
+      const config: ProviderConfigs = {
+        etherscan: {
+          ...FALLBACK_PROVIDERS.etherscan,
+          url: `${etherscanData.api || 'https://api.etherscan.io'}/api`,
+        },
+        bscscan: {
+          ...FALLBACK_PROVIDERS.bscscan,
+          url: `${bscscanData.api || 'https://api.bscscan.com'}/api`,
+        },
+        polygonscan: {
+          ...FALLBACK_PROVIDERS.polygonscan,
+          url: `${polygonscanData.api || 'https://api.polygonscan.com'}/api`,
+        },
+        coingecko: {
+          ...FALLBACK_PROVIDERS.coingecko,
+          url: coingeckoData.api || 'https://api.coingecko.com/api/v3',
+        },
+        binance: {
+          ...FALLBACK_PROVIDERS.binance,
+          url: `${binanceData.rest || 'https://api.binance.com'}/api/v3`,
+        },
+        bitget: {
+          ...FALLBACK_PROVIDERS.bitget,
+          url: `${bitgetData.rest || 'https://api.bitget.com'}/api/v2`,
+        },
+      };
+
+      // Cache die Konfiguration
+      cachedProviders = config;
+      
+      console.log('✅ API Providers configuration loaded from backend:', config);
+      return config;
+
+    } catch (error) {
+      console.warn('⚠️ Failed to load providers config from backend, using fallback:', error);
+      
+      // Bei Fehlern: Fallback-Konfiguration verwenden
+      cachedProviders = FALLBACK_PROVIDERS;
+      return FALLBACK_PROVIDERS;
+    } finally {
+      // Reset promise so future calls can try again
+      providersPromise = null;
+    }
+  })();
+
+  return providersPromise;
+}
+
+/**
+ * Exportierte Funktion für den Zugriff auf Provider-Konfiguration
+ * Usage: const providers = await getProviderConfigs();
+ */
+export async function getProviderConfigs(): Promise<ProviderConfigs> {
+  return loadProviderConfigs();
+}
+
+/**
+ * Synchrone Funktion für den Zugriff auf gecachte Provider-Konfiguration
+ * Gibt Fallback zurück wenn noch nicht geladen
+ */
+export function getProviderConfigsSync(): ProviderConfigs {
+  return cachedProviders || FALLBACK_PROVIDERS;
+}
+
+/**
+ * Cache leeren - nützlich für Testing oder wenn Konfiguration aktualisiert wurde
+ */
+export function clearProviderConfigsCache(): void {
+  cachedProviders = null;
+  providersPromise = null;
+  console.log('🔄 API Providers configuration cache cleared');
+}
+
+/**
+ * Preload der Provider-Konfiguration beim Import
+ * Startet das Laden im Hintergrund ohne zu warten
+ */
+export function preloadProviderConfigs(): void {
+  if (!cachedProviders && !providersPromise) {
+    loadProviderConfigs().catch(() => {
+      // Ignoriere Fehler beim Preload
+    });
+  }
+}
+
+/**
+ * Hilfsfunktion: Einzelnen Provider by ID abrufen
+ */
+export async function getProviderById(id: string): Promise<ProviderConfig | null> {
+  const providers = await getProviderConfigs();
+  return providers[id as keyof ProviderConfigs] || null;
+}
+
+/**
+ * Hilfsfunktion: Provider nach Kategorie filtern
+ */
+export async function getProvidersByCategory(category: string): Promise<ProviderConfig[]> {
+  const providers = await getProviderConfigs();
+  return Object.values(providers).filter(provider => provider.category === category);
+}
+
+// Legacy Export für Rückwärtskompatibilität
+// Nutzt Fallback-Konfiguration, sollte durch getProviderConfigs() ersetzt werden
+export const API_PROVIDERS: Record<string, Omit<APIProvider, 'status' | 'config'>> = Object.fromEntries(
+  Object.entries(FALLBACK_PROVIDERS).map(([key, provider]) => [
+    key, 
+    {
+      id: provider.id,
+      name: provider.name,
+      category: provider.category,
+      description: provider.description,
+      url: provider.url,
+      registerUrl: provider.registerUrl,
+      documentation: provider.documentation,
+      icon: provider.icon,
+      rateLimit: provider.rateLimit
+    }
+  ])
+);
+
+// Auto-Preload beim Import
+preloadProviderConfigs();
