@@ -19,16 +19,17 @@ let cachedConfig: ExchangeConfigs | null = null;
 let configPromise: Promise<ExchangeConfigs> | null = null;
 
 // Fallback-Konfiguration für den Fall, dass das Backend nicht erreichbar ist
+// Nutzt Environment Variables für vollständige Konfigurierbarkeit
 const FALLBACK_CONFIG: ExchangeConfigs = {
   bitget: {
     name: 'Bitget',
-    wsUrl: 'wss://ws.bitget.com/spot/v1/stream',
-    apiUrl: 'https://api.bitget.com/api/spot/v1',
+    wsUrl: (import.meta as any)?.env?.VITE_BITGET_WS_URL || 'wss://ws.bitget.com/spot/v1/stream',
+    apiUrl: `${(import.meta as any)?.env?.VITE_BITGET_API_URL || 'https://api.bitget.com'}/api/spot/v1`,
   },
   binance: {
     name: 'Binance',
-    wsUrl: 'wss://stream.binance.com:9443/ws',
-    apiUrl: 'https://api.binance.com/api/v3',
+    wsUrl: (import.meta as any)?.env?.VITE_BINANCE_WS_URL || 'wss://stream.binance.com:9443/ws',
+    apiUrl: `${(import.meta as any)?.env?.VITE_BINANCE_API_URL || 'https://api.binance.com'}/api/v3`,
   },
 } as const;
 
