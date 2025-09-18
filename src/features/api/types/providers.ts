@@ -175,8 +175,8 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
   // Start loading configuration
   providersPromise = (async () => {
     try {
-      // Parallel loading aller 6 Provider-APIs
-      const [etherscanUrls, bscscanUrls, polygonscanUrls, coingeckoUrls, binanceUrls, bitgetUrls] = await Promise.all([
+      // Parallel loading aller Provider-APIs + Registration URLs
+      const [etherscanUrls, bscscanUrls, polygonscanUrls, coingeckoUrls, binanceUrls, bitgetUrls, registrationUrls] = await Promise.all([
         fetch('/api/settings/urls/etherscan', { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
@@ -207,6 +207,11 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000)
         }),
+        fetch('/api/settings/providers/registration-urls', { 
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          signal: AbortSignal.timeout(5000)
+        }),
       ]);
 
       // Prüfe alle Responses
@@ -217,13 +222,14 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
       }
 
       // Parse JSON responses
-      const [etherscanData, bscscanData, polygonscanData, coingeckoData, binanceData, bitgetData] = await Promise.all([
+      const [etherscanData, bscscanData, polygonscanData, coingeckoData, binanceData, bitgetData, registrationData] = await Promise.all([
         etherscanUrls.json(),
         bscscanUrls.json(),
         polygonscanUrls.json(),
         coingeckoUrls.json(),
         binanceUrls.json(),
         bitgetUrls.json(),
+        registrationUrls.json(),
       ]);
 
       // Erstelle Provider-Konfiguration aus Backend-Daten
@@ -231,14 +237,17 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
         etherscan: {
           ...FALLBACK_PROVIDERS.etherscan,
           url: `${etherscanData.api || 'https://api.etherscan.io'}/api`,
+          registerUrl: registrationData.etherscan || 'https://etherscan.io/apis',
         },
         bscscan: {
           ...FALLBACK_PROVIDERS.bscscan,
           url: `${bscscanData.api || 'https://api.bscscan.com'}/api`,
+          registerUrl: registrationData.bscscan || 'https://bscscan.com/apis',
         },
         polygonscan: {
           ...FALLBACK_PROVIDERS.polygonscan,
           url: `${polygonscanData.api || 'https://api.polygonscan.com'}/api`,
+          registerUrl: registrationData.polygonscan || 'https://polygonscan.com/apis',
         },
         coingecko: {
           ...FALLBACK_PROVIDERS.coingecko,

@@ -3,18 +3,22 @@ import { useState, useEffect } from 'react';
 // Feature-specific API configuration (profi_gui.md: Feature-basierte Architektur)
 const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || `http://localhost:${(import.meta as any)?.env?.VITE_BACKEND_PORT || '8100'}`;
 
-// Provider types based on gui_api.md specification - ERWEITERT für 365 Findings
-const PROVIDERS = [
+// Provider types based on gui_api.md specification - DYNAMISCH aus Backend geladen
+const BASE_PROVIDERS = [
   // ✅ Bestehende Provider
   'binance', 'bitget', 'etherscan', 'bscscan', 'polygonscan', 'coingecko', 'telegram',
   // 🆕 NEUE Infrastructure Provider
   'redis', 'clickhouse', 'backend', 'ollama',
-  // 🆕 NEUE Development Provider  
-  'localhost', 'frontend-dev', 'test-env',
   // 🆕 NEUE System Configuration Provider
   'timeouts', 'retries', 'performance'
 ] as const;
-type Provider = typeof PROVIDERS[number];
+
+type BaseProvider = typeof BASE_PROVIDERS[number];
+type DynamicProvider = string;
+type Provider = BaseProvider | DynamicProvider;
+
+// Dynamische Provider-Liste (wird vom Backend geladen)
+let PROVIDERS: readonly Provider[] = BASE_PROVIDERS;
 
 interface ProviderURLs {
   urls: Record<string, string>;
@@ -58,12 +62,26 @@ export const useAPISettings = () => {
     setState(prev => ({ ...prev, isLoading: true, error: null }));
     
     try {
+      // 1. Lade dynamische Environment-Liste vom Backend
+      try {
+        const envResponse = await fetch(`${API_BASE}/api/settings/environment/names`);
+        if (envResponse.ok) {
+          const envData = await envResponse.json();
+          const dynamicEnvironments = envData.environments || [];
+          // Kombiniere BASE_PROVIDERS mit dynamischen Environments
+          PROVIDERS = [...BASE_PROVIDERS, ...dynamicEnvironments] as readonly Provider[];
+        }
+      } catch (error) {
+        console.warn('Failed to load dynamic environments, using base providers:', error);
+        PROVIDERS = BASE_PROVIDERS;
+      }
+
       const urls: Record<Provider, ProviderURLs> = {} as Record<Provider, ProviderURLs>;
       const websockets: Record<Provider, ProviderWebSockets> = {} as Record<Provider, ProviderWebSockets>;
       const rateLimits: Record<Provider, ProviderRateLimits> = {} as Record<Provider, ProviderRateLimits>;
       const usage: Record<Provider, ProviderUsage> = {} as Record<Provider, ProviderUsage>;
 
-      // Load data for each provider
+      // 2. Load data for each provider (including dynamic ones)
       await Promise.all(PROVIDERS.map(async (provider) => {
         try {
           // Load URLs
