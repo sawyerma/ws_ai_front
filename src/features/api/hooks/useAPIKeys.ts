@@ -9,7 +9,7 @@ import { API_PROVIDERS } from '../types/providers';
 import { buildAPIPayload, buildValidationPayload, calculateResetTime } from '../types/api';
 
 // API Base URL
-const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || 'http://localhost:8100';
+const API_BASE = (import.meta as any)?.env?.VITE_API_BASE_URL || (import.meta as any)?.env?.VITE_BACKEND_URL || '/api';
 
 // Initialize rate limits with proper typing
 const initializeRateLimits = () => {

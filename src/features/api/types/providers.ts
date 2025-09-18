@@ -242,7 +242,7 @@ async function loadProviderConfigs(): Promise<ProviderConfigs> {
         },
         coingecko: {
           ...FALLBACK_PROVIDERS.coingecko,
-          url: coingeckoData.api || (import.meta as any)?.env?.VITE_COINGECKO_API_URL || 'https://api.coingecko.com/api/v3',
+          url: coingeckoData.api || (import.meta as any)?.env?.VITE_COINGECKO_API_URL || (import.meta as any)?.env?.VITE_API_FALLBACK_URL || '/api/fallback/coingecko',
         },
         binance: {
           ...FALLBACK_PROVIDERS.binance,
