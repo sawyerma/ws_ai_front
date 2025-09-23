@@ -3,4 +3,6 @@ export * from './symbols';
 export * from './websocket';
 export * from './chart';
 export * from './trading';
-// export * from './whales'; // Whales API will be added later
+export * from './market'; // ✅ NEU: Health, Metrics, Settings
+export * from './exchanges'; // ✅ NEU: Binance, Bitget APIs
+export * from './whales'; // ✅ NEU: Dedizierte WhalesAPI (konsistent mit anderen APIs)
