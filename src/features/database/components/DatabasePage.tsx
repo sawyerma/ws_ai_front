@@ -1,7 +1,29 @@
 import { useState, useEffect } from "react";
-import ThemeProvider from "../shared/ui/theme-provider";
-import ThemeToggle from "../shared/ui/theme-toggle";
-import { getSettings, saveSettings, CoinSetting } from "../shared/api/trading";
+import ThemeProvider from "@/shared/ui/theme-provider";
+import ThemeToggle from "@/shared/ui/theme-toggle";
+// Placeholder für Database-API (wird später implementiert)
+interface CoinSetting {
+  symbol: string;
+  market: string;
+  store_live: boolean;
+  load_history: boolean;
+  history_until: string;
+  favorite: boolean;
+  chart_resolution: string;
+  db_resolutions: string[];
+  exchange?: string;
+}
+
+const getSettings = async (): Promise<CoinSetting[]> => {
+  // Placeholder - später durch echte API ersetzen
+  return [];
+};
+
+const saveSettings = async (settings: CoinSetting[]): Promise<boolean> => {
+  // Placeholder - später durch echte API ersetzen
+  console.log('Save settings:', settings);
+  return true;
+};
 import { RefreshCw, Save, Calendar, Clock, AlertCircle } from "lucide-react";
 
 interface DatabaseProps {
