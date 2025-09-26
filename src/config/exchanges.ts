@@ -3,6 +3,8 @@
 // Loads exchange URLs dynamically from backend settings API
 // Replaces hardcoded URLs with GUI-configurable endpoints
 
+import { API_CONFIG } from './constants';
+
 export interface ExchangeConfig {
   name: string;
   wsUrl: string;
@@ -53,23 +55,23 @@ async function loadExchangeConfig(): Promise<ExchangeConfigs> {
     try {
       // Parallel loading aller benötigten Endpoints
       const [bitgetUrls, binanceUrls, bitgetWs, binanceWs] = await Promise.all([
-        fetch('/api/settings/urls/bitget', { 
+        fetch(`${API_CONFIG.BASE_URL}/api/settings/urls/bitget`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           // 5 second timeout
           signal: AbortSignal.timeout(5000)
         }),
-        fetch('/api/settings/urls/binance', { 
+        fetch(`${API_CONFIG.BASE_URL}/api/settings/urls/binance`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000)
         }),
-        fetch('/api/settings/websockets/bitget', { 
+        fetch(`${API_CONFIG.BASE_URL}/api/settings/websockets/bitget`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000)
         }),
-        fetch('/api/settings/websockets/binance', { 
+        fetch(`${API_CONFIG.BASE_URL}/api/settings/websockets/binance`, { 
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           signal: AbortSignal.timeout(5000)
