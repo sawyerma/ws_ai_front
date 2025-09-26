@@ -7,7 +7,31 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/shared/*": ["./src/shared/*"],
+      
+      // Feature-spezifische Aliases
+      "@trading": ["./src/features/trading"],
+      "@trading/*": ["./src/features/trading/*"],
+      "@ai": ["./src/features/ai"],
+      "@ai/*": ["./src/features/ai/*"],
+      "@whales": ["./src/features/whales"],
+      "@whales/*": ["./src/features/whales/*"],
+      "@enterprise": ["./src/features/enterprise"],
+      "@enterprise/*": ["./src/features/enterprise/*"],
+      "@database": ["./src/features/database"],
+      "@database/*": ["./src/features/database/*"],
+      "@news": ["./src/features/news"],
+      "@news/*": ["./src/features/news/*"],
+      "@api": ["./src/features/api"],
+      "@api/*": ["./src/features/api/*"],
+      "@trading-bot": ["./src/features/trading-bot"],
+      "@trading-bot/*": ["./src/features/trading-bot/*"],
+      
+      // Service-Aliases
+      "@services": ["./src/services"],
+      "@services/*": ["./src/services/*"]
     },
     "noImplicitAny": false,
     "noUnusedParameters": false,
