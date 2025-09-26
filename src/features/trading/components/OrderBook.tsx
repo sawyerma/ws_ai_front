@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useMemo } from "react";
-import OptimizedOrderbook from "./OptimizedOrderbook";
-import OptimizedTradesList from "./OptimizedTradesList";
-import { useDebouncedCallback } from "../../../hooks/use-debounce";
-import { useWebSocket } from "../hooks/useWebSocket";
-import { WebSocketService } from "../../../services/api/websocket";
+import OptimizedOrderbook from "@/features/trading/components/OptimizedOrderbook";
+import OptimizedTradesList from "@/features/trading/components/OptimizedTradesList";
+import { useDebouncedCallback } from "@/hooks/use-debounce";
+import { useWebSocket } from "@/features/trading/hooks/useWebSocket";
+import { WebSocketService } from "@/services/api/websocket";
+import { BaseAPI } from "@/services/api/base";
 
 interface OrderbookEntry {
   price: number;
@@ -95,27 +96,28 @@ const OrderBook = ({
     setError(null);
     
     try {
-      const response = await fetch(`http://localhost:8100/orderbook?symbol=${apiSymbol}&market_type=spot&limit=15`);
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      
-      const data = await response.json();
+      const data = await BaseAPI.request<any>(`/api/market/orderbook`, {
+        params: {
+          symbol: apiSymbol,
+          market_type: 'spot',
+          limit: 15
+        }
+      });
       
       // Transform API data to component format
-      const asks: OrderbookEntry[] = data.asks.map((ask: any) => ({
+      const asks: OrderbookEntry[] = data.asks?.map((ask: any) => ({
         price: ask.price,
         size: ask.size,
         total: ask.price * ask.size,
         side: "sell" as const
-      }));
+      })) || [];
       
-      const bids: OrderbookEntry[] = data.bids.map((bid: any) => ({
+      const bids: OrderbookEntry[] = data.bids?.map((bid: any) => ({
         price: bid.price,
         size: bid.size,
         total: bid.price * bid.size,
         side: "buy" as const
-      }));
+      })) || [];
       
       setLiveOrders([...asks, ...bids]);
     } catch (err) {
