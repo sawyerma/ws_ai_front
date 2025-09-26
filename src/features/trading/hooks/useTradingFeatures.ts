@@ -29,19 +29,19 @@ export const useStrategies = (exchange = 'binance', autoRefresh = true) => {
     }
   }, [fetchStrategies, autoRefresh]);
 
-  const createStrategy = useCallback(async (strategyData) => {
+  const createStrategy = useCallback(async (strategyData: any) => {
     const result = await TradingAPI.createStrategy(strategyData);
     await fetchStrategies(); // Refresh list
     return result;
   }, [fetchStrategies]);
 
-  const updateStrategy = useCallback(async (strategyId, updates) => {
+  const updateStrategy = useCallback(async (strategyId: string, updates: any) => {
     const result = await TradingAPI.updateStrategy(strategyId, updates);
     await fetchStrategies(); // Refresh list
     return result;
   }, [fetchStrategies]);
 
-  const deleteStrategy = useCallback(async (strategyId) => {
+  const deleteStrategy = useCallback(async (strategyId: string) => {
     await TradingAPI.deleteStrategy(strategyId);
     await fetchStrategies(); // Refresh list
   }, [fetchStrategies]);
@@ -63,10 +63,10 @@ export const useGridTrading = () => {
   const [activeGrids, setActiveGrids] = useState([]);
   const [calculating, setCalculating] = useState(false);
 
-  const calculateLevels = useCallback(async (symbol, exchange, gridConfig) => {
+  const calculateLevels = useCallback(async (symbol: string, exchange: string, gridConfig: any) => {
     setCalculating(true);
     try {
-      const response = await TradingAPI.calculateGridLevels(symbol, exchange, gridConfig);
+      const response = await TradingAPI.calculateGridLevels(symbol, exchange, gridConfig) as any;
       setGridLevels(response.levels);
       return response;
     } finally {
@@ -74,7 +74,7 @@ export const useGridTrading = () => {
     }
   }, []);
 
-  const createGrid = useCallback(async (gridData) => {
+  const createGrid = useCallback(async (gridData: any) => {
     const result = await TradingAPI.createGridStrategy(gridData);
     // Refresh active grids
     fetchActiveGrids();
@@ -83,8 +83,8 @@ export const useGridTrading = () => {
 
   const fetchActiveGrids = useCallback(async () => {
     try {
-      const response = await TradingAPI.getActivePositions();
-      const grids = response.positions?.filter(p => p.strategy_type === 'grid') || [];
+      const response = await TradingAPI.getActivePositions() as any;
+      const grids = response.positions?.filter((p: any) => p.strategy_type === 'grid') || [];
       setActiveGrids(grids);
     } catch (err) {
       console.error('Failed to fetch active grids:', err);
@@ -115,7 +115,7 @@ export const useRiskManagement = () => {
 
   const fetchAlerts = useCallback(async () => {
     try {
-      const response = await TradingAPI.getRiskAlerts();
+      const response = await TradingAPI.getRiskAlerts() as any;
       setAlerts(response.alerts || []);
     } catch (err) {
       console.error('Failed to fetch risk alerts:', err);
@@ -124,7 +124,7 @@ export const useRiskManagement = () => {
 
   const fetchSystemStatus = useCallback(async () => {
     try {
-      const response = await TradingAPI.getSystemStatus();
+      const response = await TradingAPI.getSystemStatus() as any;
       setSystemStatus(response);
     } catch (err) {
       console.error('Failed to fetch system status:', err);
@@ -145,7 +145,7 @@ export const useRiskManagement = () => {
     return () => clearInterval(interval);
   }, [fetchAlerts, fetchSystemStatus]);
 
-  const emergencyStop = useCallback(async (reason) => {
+  const emergencyStop = useCallback(async (reason: string) => {
     const result = await TradingAPI.emergencyStopAll(reason);
     await fetchSystemStatus(); // Refresh status
     return result;
@@ -164,7 +164,7 @@ export const useRiskManagement = () => {
 };
 
 // 💰 PORTFOLIO TRACKING HOOKS
-export const usePortfolioTracking = (exchange, timeframe = '24h') => {
+export const usePortfolioTracking = (exchange: string, timeframe = '24h') => {
   const [metrics, setMetrics] = useState(null);
   const [balance, setBalance] = useState(null);
   const [pnl, setPnl] = useState(null);
@@ -176,9 +176,9 @@ export const usePortfolioTracking = (exchange, timeframe = '24h') => {
     try {
       setLoading(true);
       const [metricsRes, balanceRes, pnlRes] = await Promise.all([
-        TradingAPI.getPortfolioMetrics(exchange, timeframe),
-        TradingAPI.getPortfolioBalance(exchange),
-        TradingAPI.getPnLReport(exchange, undefined, timeframe)
+        TradingAPI.getPortfolioMetrics(exchange, timeframe) as any,
+        TradingAPI.getPortfolioBalance(exchange) as any,
+        TradingAPI.getPnLReport(exchange, undefined, timeframe) as any
       ]);
       
       setMetrics(metricsRes);
@@ -207,7 +207,7 @@ export const usePortfolioTracking = (exchange, timeframe = '24h') => {
 };
 
 // 🎯 SETTINGS INTEGRATION HOOKS (Nutzt Enterprise-Backend)
-export const useTradingSettings = (exchange) => {
+export const useTradingSettings = (exchange: string) => {
   const [settings, setSettings] = useState(null);
   const [rateLimits, setRateLimits] = useState(null);
   const [wsConfig, setWsConfig] = useState(null);
@@ -219,9 +219,9 @@ export const useTradingSettings = (exchange) => {
       
       try {
         const [settingsRes, limitsRes, wsRes] = await Promise.all([
-          TradingAPI.getTradingSettings(exchange),
-          TradingAPI.getExchangeRateLimits(exchange),
-          TradingAPI.getWebSocketConfig(exchange)
+          TradingAPI.getTradingSettings(exchange) as any,
+          TradingAPI.getExchangeRateLimits(exchange) as any,
+          TradingAPI.getWebSocketConfig(exchange) as any
         ]);
         
         setSettings(settingsRes);

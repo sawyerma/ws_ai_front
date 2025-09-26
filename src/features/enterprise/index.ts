@@ -1,10 +1,10 @@
 // Enterprise Feature exports
-export * from './hooks';
-export * from './types';
+// export * from './hooks';
+// export * from './types';
 
-// Enterprise Hooks re-export für direkten Zugang
+// Enterprise Hooks re-export für direkten Zugang (korrekte Pfade)
 export { 
   useEnterpriseMarketData, 
   useAdvancedCharts, 
   useEnterpriseDiagnostics 
-} from './hooks';
+} from '../trading/hooks/useEnterprise';
