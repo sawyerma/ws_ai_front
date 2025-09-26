@@ -2,5 +2,11 @@
 export * from './hooks';
 export * from './types';
 
-// Whales Components (wird in Teil D migriert)  
-// export * from './components';
+// Whales Components
+export { default as WhalesPage } from './components/WhalesPage';
+
+// Whales Hooks re-export für direkten Zugang
+export { 
+  useWhaleWebSocket, 
+  useWhaleAlerts 
+} from './hooks';

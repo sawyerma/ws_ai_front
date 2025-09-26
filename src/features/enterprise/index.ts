@@ -2,5 +2,9 @@
 export * from './hooks';
 export * from './types';
 
-// Enterprise Components (wird in Teil D migriert)
-// export * from './components';
+// Enterprise Hooks re-export für direkten Zugang
+export { 
+  useEnterpriseMarketData, 
+  useAdvancedCharts, 
+  useEnterpriseDiagnostics 
+} from './hooks';

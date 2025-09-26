@@ -68,6 +68,21 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      "@features": path.resolve(__dirname, "./src/features"),
+      "@shared": path.resolve(__dirname, "./src/shared"),
+      
+      // Feature-spezifische Aliases
+      "@trading": path.resolve(__dirname, "./src/features/trading"),
+      "@ai": path.resolve(__dirname, "./src/features/ai"),
+      "@whales": path.resolve(__dirname, "./src/features/whales"),
+      "@enterprise": path.resolve(__dirname, "./src/features/enterprise"),
+      "@database": path.resolve(__dirname, "./src/features/database"),
+      "@news": path.resolve(__dirname, "./src/features/news"),
+      "@api": path.resolve(__dirname, "./src/features/api"),
+      "@trading-bot": path.resolve(__dirname, "./src/features/trading-bot"),
+      
+      // Service-Aliases
+      "@services": path.resolve(__dirname, "./src/services"),
     },
   },
   build: {
